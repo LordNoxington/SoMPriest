@@ -913,72 +913,17 @@ Routine:LoadRoutine(Routine.Specs.Priest)
 
 local mytable = {
   key = "cromulon_config",
-  name = "Rebecca Feral Tbc",
+  name = "Yosh Priest SoM",
   height = 650,
   width = 400,
   panels = 
   {
     { 
-      name = "Offensive",
-      items = 
-      {
-        { key = "heading", type = "text", color = 'FF7C0A', text = "Multiplier = Eviscerate=Attack Power * (Number of Combo Points used * 0.03) * abitrary multiplier to account for Auto Attacks while pooling Recommendation : <= 60 == 1.6 >= 60 == 1.4" },
-        
-        { key = "heading", type = "heading", color = 'FF7C0A', text = "Execute" },
-        { key = "personalmultiplier", type = "slider", text = "Execute Multiplier", label = "Execute Multiplier", min = 1, max = 3, step = 0.1 },
-        { key = "heading", type = "heading", color = 'FF7C0A', text = "Opener" },
-        { key = "openerfrontal", width = 175, label = "Frontal", text = wowex.wowexStorage.read("openerfrontal"), type = "dropdown",
-        options = {"Pounce", "None",} },
-        { key = "openerbehind", width = 175, label = "Behind", text = wowex.wowexStorage.read("openerbehind"), type = "dropdown",
-        options = {"Ravage", "Pounce","None"} },
-        --{ key = "pershealwavepercent", type = "slider", text = "Healing Wave", label = "Healing Wave at", min = 1, max = 100, step = 1 },
-        
-      },
-    },
-    { 
-      name = "Defensives",
-      items = 
-      {
-        { key = "heading", type = "heading", color = 'FF7C0A', text = "In Combat Healing" },
-        { key = "heading", type = "heading", color = 'FF7C0A', text = "Rejuvenation" },
-        { key = "rejuvichp", type = "slider", text = "", label = "Rejuvenation at", min = 1, max = 100, step = 1 },
-        { key = "heading", type = "heading", color = 'FF7C0A', text = "Healing Touch" },
-        { key = "healingtouchichp", type = "slider", text = "", label = "Healing Touch at", min = 0, max = 100, step = 1 },
-        { key = "heading", type = "heading", color = 'FF7C0A', text = "Regrowth" },
-        { key = "regrowthichp", type = "slider", text = "", label = "Regrowth at", min = 0, max = 100, step = 1 },
-        { key = "heading", type = "heading", color = 'FF7C0A', text = "Out of Combat Healing" },
-        { key = "heading", type = "heading", color = 'FF7C0A', text = "Rejuvenation" },
-        { key = "rejuvoochp", type = "slider", text = "", label = "Rejuvenation at", min = 1, max = 100, step = 1 },
-        { key = "heading", type = "heading", color = 'FF7C0A', text = "Healing Touch" },
-        { key = "healingtouchoochp", type = "slider", text = "", label = "Healing Touch at", min = 0, max = 100, step = 1 },
-        { key = "heading", type = "heading", color = 'FF7C0A', text = "Regrowth" },
-        { key = "regrowthoochp", type = "slider", text = "", label = "Regrowth at", min = 0, max = 100, step = 1 },
-        
-      }
-    },
-    { 
       name = "General",
       items = 
-      {
-        { key = "heading", type = "heading", color = 'FF7C0A', text = "Stealth" },
-        {type = "text", text = "DynOM = Scans the area around you for NPC aggro ranges and puts you into stealth when you get close to them.", color = 'FF7C0A'},
-        {type = "text", text = "DynTarget = Stealthes you when you're near your TARGET's aggro range.", color = 'FF7C0A'},       
-        { key = "stealthmode", width = 175, label = "Stealth Mode", text = wowex.wowexStorage.read("stealthmode"), type = "dropdown",
-        options = {"DynOM", "DynTarget",} },
-        
+      {        
         { key = "heading", type = "heading", color = 'FF7C0A', text = "Other" },
         { key = "autoloot",  type = "checkbox", text = "Auto Loot", desc = "" },
-        
-      }
-    },
-    { 
-      name = "Draw",
-      items = 
-      {
-        --  { key = "bladeflurrydraw",  type = "checkbox", text = "BladeFlurry Range", desc = "" },
-        --  { key = "targetingusdraw",  type = "checkbox", text = "Players targeting us", desc = "" },
-        --  {type = "text", text = "Red: >= 30y yellow: <= 30y green: <= 8y", color = 'FFF468'},
-        { key = "pvpdraw",  type = "checkbox", text = "PvP Radar", desc = "" },
         
       }
     },
@@ -986,11 +931,7 @@ local mytable = {
   
   tabgroup = 
   {
-    {text = "Offensive", value = "one"},
-    {text = "Defensives", value = "two"},
-    {text = "General", value = "three"},
-    {text = "Draw", value = "four"}
-    
+    {text = "General", value = "one"},    
   }
 }
 Draw:Enable()
