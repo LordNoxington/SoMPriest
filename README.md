@@ -1,5 +1,5 @@
 # SoMPriest
-A Shadow priest rotation primarily used for leveling and BGs. Also supports healing dungeons.
+A Shadow priest rotation primarily used for leveling and BGs. Also supports healing dungeons. I will be slowly adding more PvP logic, including engineering items, trinkets etc.
 
 You can critique my code, as I am definitely still learning :)
 
