@@ -641,18 +641,18 @@ Routine:RegisterRoutine(function()
   end
 
   local function Dot() -- off-target dotting
-    if UnitAffectingCombat("player") and not mounted() and not UnitIsDeadOrGhost("target") and mana >= 50 then
+    if UnitAffectingCombat("player") and not mounted() and not UnitIsDeadOrGhost("target") and mana >= 50 and enemiesAround("player", 10) >= 2 then
       for object in OM:Objects(OM.Types.Player) do
         if UnitIsPlayer(object) and UnitCanAttack("player",object) and UnitTargetingUnit(object,"player") and distance("player",object) <= 30 and not UnitTargetingUnit("player",object) then
           --if IsAutoRepeatAction(1) then 
           --  Debug(8092,"Stopping wand to DOT")
           --  Eval('RunMacroText("/stopcasting")', 'player')
           --end
-          if castable(ShadowWordPain,"target") and not debuff(ShadowWordPain,"target") and health("target") >= 10 and not IsAutoRepeatAction(1) then
-            return cast(ShadowWordPain,"target")
+          if castable(ShadowWordPain,object) and not debuff(ShadowWordPain,object) and health(object) >= 10 and not IsAutoRepeatAction(1) then
+            return cast(ShadowWordPain,object)
           end
-          if castable(DevouringPlague,"target") and not debuff(DevouringPlague,"target") and not IsAutoRepeatAction(1) and not immune("target",DevouringPlague) and health("target") >= 50 then
-            return cast(DevouringPlague,"target")
+          if castable(DevouringPlague,object) and not debuff(DevouringPlague,object) and not IsAutoRepeatAction(1) and health(object) >= 50 then
+            return cast(DevouringPlague,object)
           end
         end
       end
@@ -675,24 +675,6 @@ Routine:RegisterRoutine(function()
 
   local function Healing()
       --*ic
-      --[[if UnitAffectingCombat("player") and (health("target") >= 30 or health() <= 30) and instanceType ~= "party" and not IsEatingOrDrinking("player") then
-        if health() <= 60 and IsAutoRepeatAction(1) and ((UnitPower("player") >= manacost(PowerWordShield)) or (UnitPower("player") >= manacost(Renew)) or (UnitPower("player") >= manacost(FlashHeal))) then
-          Debug(8092,"Stopping wand to heal")
-          Eval('RunMacroText("/stopcasting")', 'player')
-        end
-        if health() <= 50 then
-          Eval('RunMacroText("/use Healing Potion")', 'player')
-        end
-        if castable(PowerWordShield,"player") and health() <= 90 and not debuff(6788,"player") and not buff(PowerWordShield,"player") and not IsAutoRepeatAction(1) and UnitTargetingUnit("target","player") then
-          return cast(PowerWordShield,"player")
-        end
-        if castable(Renew,"player") and not buff(Renew,"player") and health() <= 60 then
-          return cast(Renew,"player")
-        end
-        if castable(FlashHeal,"player") and health() <= 60 and not moving() and not isCasting("player") then
-          return cast(FlashHeal,"player")
-        end
-      ]]
       if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
         for object in OM:Objects(OM.Types) do
           if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) --[[and UnitInParty(object)]] then -- if friendly party player in range
@@ -751,6 +733,7 @@ Routine:RegisterRoutine(function()
                 Debug(8092,"Stopping wand to heal")
                 Eval('RunMacroText("/stopcasting")', 'player')
               end
+              -- Defensive dispel
               if isMagic(object) and castable(DispelMagic,object) then
                 for i=1,40 do
                 local name = UnitBuff("target",i)
@@ -984,7 +967,7 @@ Routine:RegisterRoutine(function()
       if Healing() then return true end
       if Dps() then return true end
       if Interrupt() then return true end
-      --if Dot() then return true end
+      if Dot() then return true end
       if pvp() then return true end
       if healthstone() then return true end
       if Dismounter() then return true end
