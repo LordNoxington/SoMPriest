@@ -674,7 +674,8 @@ Routine:RegisterRoutine(function()
   end
 
   local function Healing()
-      --*ic
+    --*ic
+    if wowex.wowexStorage.read("useHeals") then
       if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
         for object in OM:Objects(OM.Types) do
           if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) --[[and UnitInParty(object)]] then -- if friendly party player in range
@@ -793,6 +794,7 @@ Routine:RegisterRoutine(function()
           end
         end
       end
+    end
   end
   local function Dps()
     if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") then
@@ -850,13 +852,15 @@ Routine:RegisterRoutine(function()
 
   local function pvp()
     -- Offensive dispell
-    if isMagicBuff("target") and castable(DispelMagic,"target") and UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not UnitIsDeadOrGhost("target") and not mounted() then
-      for i=1,40 do
-        local name = UnitBuff("target",i)
-        if name == "Arcane Power" or name == "Innervate" or name == "Ghost Wolf" or name == "Sacrifice" or name == "Fear Ward" or name == "Power Word: Fortitude" or name == "Power Word: Shield" or name == "Blessing of Freedom" or name == "Blessing of Protection" or name == "Blessing of Sacrifice" or name == "Regrowth" or name == "Cone of Cold" or name == "Shadow Ward" or name == "Mana Shield" or name == "Presence of Mind" or name == "Ice Barrier" or name == "Nature's Swiftness" or name == "Dampen Magic" then
-          Eval('RunMacroText("/stopcasting")', 'player')
-          return cast(DispelMagic,"target")
-        else break end
+    if wowex.wowexStorage.read("useDispels") then
+      if isMagicBuff("target") and castable(DispelMagic,"target") and UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not UnitIsDeadOrGhost("target") and not mounted() then
+        for i=1,40 do
+          local name = UnitBuff("target",i)
+          if name == "Arcane Power" or name == "Innervate" or name == "Ghost Wolf" or name == "Sacrifice" or name == "Fear Ward" or name == "Power Word: Fortitude" or name == "Power Word: Shield" or name == "Blessing of Freedom" or name == "Blessing of Protection" or name == "Blessing of Sacrifice" or name == "Regrowth" or name == "Cone of Cold" or name == "Shadow Ward" or name == "Mana Shield" or name == "Presence of Mind" or name == "Ice Barrier" or name == "Nature's Swiftness" or name == "Dampen Magic" then
+            Eval('RunMacroText("/stopcasting")', 'player')
+            return cast(DispelMagic,"target")
+          else break end
+        end
       end
     end
 
@@ -982,6 +986,30 @@ Routine:RegisterRoutine(function()
   
 end, Routine.Classes.Priest, Routine.Specs.Priest)
 Routine:LoadRoutine(Routine.Specs.Priest)
+
+local button_example = {
+  {
+    key = "useHeals",
+    buttonname = "useHeals",
+    texture = "spell_nature_healingtouch",
+    tooltip = "Use Heals and Dispel",
+    text = "Use Heals",
+    setx = "TOP",
+    parent = "settings",
+    sety = "TOPRIGHT"
+  },
+  {
+    key = "useDispel",
+    buttonname = "useDispel",
+    texture = "Spell_nature_nullifypoison",
+    tooltip = "Offensive Dispel Magic",
+    text = "Dispel Magic",
+    setx = "TOP",
+    parent = "useHeals",
+    sety = "TOPRIGHT"
+  },
+}
+wowex.button_factory(button_example)
 
 local mytable = {
   key = "cromulon_config",
