@@ -644,7 +644,7 @@ Routine:RegisterRoutine(function()
     if wowex.wowexStorage.read('dotallplayers') then
       if UnitAffectingCombat("player") and not mounted() and not UnitIsDeadOrGhost("target") and mana >= 50 then
         for object in OM:Objects(OM.Types.Player) do
-          if UnitIsPlayer(object) and UnitCanAttack("player",object) and UnitTargetingUnit(object,"player") and distance("player",object) <= 30 and not UnitTargetingUnit("player",object) then
+          if UnitCanAttack("player",object) and UnitTargetingUnit(object,"player") and distance("player",object) <= 30 and not UnitTargetingUnit("player",object) then
           --if IsAutoRepeatAction(1) then 
           --  Debug(8092,"Stopping wand to DOT")
           --  Eval('RunMacroText("/stopcasting")', 'player')
@@ -682,7 +682,7 @@ Routine:RegisterRoutine(function()
     --*ic
     if wowex.wowexStorage.read("useHeals") then
       if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
-        for object in OM:Objects(OM.Types.Player) do
+        for object in OM:Objects(OM.Types) do
           if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) --[[and UnitInParty(object)]] then -- if friendly party player in range
           -- priotise tank
             if instanceType == "party" then
