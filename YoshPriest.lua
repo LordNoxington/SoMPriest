@@ -889,12 +889,12 @@ Routine:RegisterRoutine(function()
     if wowex.wowexStorage.read("useDefensiveDispel") then
       if wowex.wowexStorage.read('importantdefdispel') then
         if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
-          if isMagic(object) and castable(DispelMagic,object) then
+          if isMagic("player") and castable(DispelMagic,"player") then
             for i=1,40 do
-            local name = UnitBuff("target",i)
+            local name = UnitDebuff("player",i)
               if name == "Shadow Word: Pain" or name == "Corruption" or name == "Immolate" or name == "Fear" or name == "Death Coil" or name == "Howl of Terror" or name == "Frost Nova" or name == "Frost Bolt" or name == "Hunter's Mark" or name == "Polymorph" or name == "Hibernate" or name == "Hammer of Justice" or name == "Entangling Roots" then
-                Eval('RunMacroText("/stopcasting")', 'player')
-                return cast(DispelMagic,object)
+                --Eval('RunMacroText("/stopcasting")', 'player')
+                return cast(DispelMagic,"player")
               else break end
             end
           end
