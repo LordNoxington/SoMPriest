@@ -798,18 +798,24 @@ Routine:RegisterRoutine(function()
         end
       end
     end
+    -- Defensive dispel
     if wowex.wowexStorage.read("useDefensiveDispel") then
-      if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
-      -- Defensive dispel
-        if isMagic(object) and castable(DispelMagic,object) then
-          for i=1,40 do
-          local name = UnitBuff("target",i)
-            if name == "Shadow Word: Pain" or name == "Corruption" or name == "Immolate" or name == "Fear" or name == "Death Coil" or name == "Howl of Terror" or name == "Frost Nova" or name == "Frost Bolt" or name == "Hunter's Mark" or name == "Polymorph" or name == "Hibernate" or name == "Hammer of Justice" or name == "Entangling Roots" then
-              Eval('RunMacroText("/stopcasting")', 'player')
-              return cast(DispelMagic,object)
-            else break end
+      if wowex.wowexStorage.read('importantdefdispel') then
+        if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
+          if isMagic(object) and castable(DispelMagic,object) then
+            for i=1,40 do
+            local name = UnitBuff("target",i)
+              if name == "Shadow Word: Pain" or name == "Corruption" or name == "Immolate" or name == "Fear" or name == "Death Coil" or name == "Howl of Terror" or name == "Frost Nova" or name == "Frost Bolt" or name == "Hunter's Mark" or name == "Polymorph" or name == "Hibernate" or name == "Hammer of Justice" or name == "Entangling Roots" then
+                Eval('RunMacroText("/stopcasting")', 'player')
+                return cast(DispelMagic,object)
+              else break end
+            end
           end
-        end              
+        end
+      elseif not wowex.wowexStorage.read('importantdefdispel') then
+        if isMagic("player") then
+          return cast(DispelMagic,"player")
+        end            
       end
     end
   end
@@ -870,13 +876,19 @@ Routine:RegisterRoutine(function()
   local function pvp()
     -- Offensive dispell
     if wowex.wowexStorage.read("useOffensiveDispel") then
-      if isMagicBuff("target") and castable(DispelMagic,"target") and UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not UnitIsDeadOrGhost("target") and not mounted() then
-        for i=1,40 do
-          local name = UnitBuff("target",i)
-          if name == "Arcane Power" or name == "Innervate" or name == "Ghost Wolf" or name == "Sacrifice" or name == "Fear Ward" or name == "Power Word: Fortitude" or name == "Power Word: Shield" or name == "Blessing of Freedom" or name == "Blessing of Protection" or name == "Blessing of Sacrifice" or name == "Regrowth" or name == "Cone of Cold" or name == "Shadow Ward" or name == "Mana Shield" or name == "Presence of Mind" or name == "Ice Barrier" or name == "Nature's Swiftness" or name == "Dampen Magic" then
-            Eval('RunMacroText("/stopcasting")', 'player')
-            return cast(DispelMagic,"target")
-          else break end
+      if wowex.wowexStorage.read('importantoffdispel') then
+        if isMagicBuff("target") and castable(DispelMagic,"target") and UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not UnitIsDeadOrGhost("target") and not mounted() then
+          for i=1,40 do
+            local name = UnitBuff("target",i)
+            if name == "Arcane Power" or name == "Innervate" or name == "Ghost Wolf" or name == "Sacrifice" or name == "Fear Ward" or name == "Power Word: Fortitude" or name == "Power Word: Shield" or name == "Blessing of Freedom" or name == "Blessing of Protection" or name == "Blessing of Sacrifice" or name == "Regrowth" or name == "Cone of Cold" or name == "Shadow Ward" or name == "Mana Shield" or name == "Presence of Mind" or name == "Ice Barrier" or name == "Nature's Swiftness" or name == "Dampen Magic" then
+              Eval('RunMacroText("/stopcasting")', 'player')
+              return cast(DispelMagic,"target")
+            else break end
+          end
+        end
+      elseif not wowex.wowexStorage.read('importantoffdispel') then
+        if isMagicBuff("target") then
+          return cast(DispelMagic,"target")
         end
       end
     end
@@ -1055,8 +1067,11 @@ local mytable = {
       name = "General",
       items = 
       {        
-        { key = "heading", type = "heading", color = 'FF7C0A', text = "Other" },
+        { key = "heading", type = "heading", color = 'FF7C0A', text = "Loot" },
         { key = "autoloot",  type = "checkbox", text = "Auto Loot", desc = "" },
+        { key = "heading", type = "heading", color = 'FF7C0A', text = "Dispels" },
+        { key = "importantoffdispel",  type = "checkbox", text = "Only Dispel Important Buffs", desc = "" },
+        { key = "importantdefdispel",  type = "checkbox", text = "Only Dispel Important Debuffs", desc = "" },
       }
     },
   },
