@@ -670,6 +670,9 @@ Routine:RegisterRoutine(function()
           return cast(PsychicScream,"target")
         end
       end
+      if castable(Silence,"target") and not debuff(PsychicScream,"target") and not isProtected(object) and targetclass == "Warlock" or targetclass == "Priest" or targetclass == "Paladin" or targetclass == "Mage" or targetclass == "Druid" or targetclass == "Shaman" or (targetclass == "Hunter" and distance("player","target") <= 7) then
+        return cast(Silence,"target")
+      end
     end
   end
 
@@ -795,10 +798,24 @@ Routine:RegisterRoutine(function()
         end
       end
     end
+    if wowex.wowexStorage.read("useDefensiveDispel") then
+      if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
+      -- Defensive dispel
+        if isMagic(object) and castable(DispelMagic,object) then
+          for i=1,40 do
+          local name = UnitBuff("target",i)
+            if name == "Shadow Word: Pain" or name == "Corruption" or name == "Immolate" or name == "Fear" or name == "Death Coil" or name == "Howl of Terror" or name == "Frost Nova" or name == "Frost Bolt" or name == "Hunter's Mark" or name == "Polymorph" or name == "Hibernate" or name == "Hammer of Justice" or name == "Entangling Roots" then
+              Eval('RunMacroText("/stopcasting")', 'player')
+              return cast(DispelMagic,object)
+            else break end
+          end
+        end              
+      end
+    end
   end
   local function Dps()
     if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") then
-      if (cooldown(MindBlast) <= 1.6 and IsAutoRepeatAction(1) and health("target") >= 50 and not debuff(DevouringPlague,"target")) and (UnitPower("player") >= manacost(MindBlast) or UnitPower("player") >= manacost(ShadowWordPain)) then
+      if (cooldown(MindBlast) <= 1.6 and IsAutoRepeatAction(1) and health("target") >= 60 and not debuff(DevouringPlague,"target")) and (UnitPower("player") >= manacost(MindBlast) or UnitPower("player") >= manacost(ShadowWordPain)) then
         Debug(8092,"Stopping wand to mind blast")
         Eval('RunMacroText("/stopcasting")', 'player')
       end
@@ -852,7 +869,7 @@ Routine:RegisterRoutine(function()
 
   local function pvp()
     -- Offensive dispell
-    if wowex.wowexStorage.read("useDispels") then
+    if wowex.wowexStorage.read("useOffensiveDispel") then
       if isMagicBuff("target") and castable(DispelMagic,"target") and UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not UnitIsDeadOrGhost("target") and not mounted() then
         for i=1,40 do
           local name = UnitBuff("target",i)
@@ -997,21 +1014,31 @@ local button_example = {
   {
     key = "useHeals",
     buttonname = "useHeals",
-    texture = "spell_nature_healingtouch",
-    tooltip = "Use Heals and Dispel",
+    texture = "spell_holy_flashheal",
+    tooltip = "Use Heals",
     text = "Use Heals",
     setx = "TOP",
     parent = "settings",
     sety = "TOPRIGHT"
   },
   {
-    key = "useDispel",
-    buttonname = "useDispel",
-    texture = "Spell_nature_nullifypoison",
-    tooltip = "Offensive Dispel Magic",
-    text = "Dispel Magic",
+    key = "useDefensiveDispel",
+    buttonname = "useDefensiveDispel",
+    texture = "spell_holy_dispelmagic",
+    tooltip = "Use Defensive Dispels",
+    text = "Use Defensive Dispels",
     setx = "TOP",
     parent = "useHeals",
+    sety = "TOPRIGHT"
+  },  
+  {
+    key = "useOffensiveDispel",
+    buttonname = "useOffensiveDispel",
+    texture = "spell_nature_purge",
+    tooltip = "Use Offensive Dispels",
+    text = "Use Offensive Dispels",
+    setx = "TOP",
+    parent = "useDefensiveDispel",
     sety = "TOPRIGHT"
   },
 }
