@@ -632,7 +632,7 @@ Routine:RegisterRoutine(function()
       --if castable(VampiricEmbrace,"target") and not debuff(VampiricEmbrace,"target") --[[and (health() <= 95 or UnitIsPlayer("target"))]] and UnitIsPlayer("target") then
       --  return cast(VampiricEmbrace,"target")
       --end
-      if castable(MindBlast,"target") and not moving() then
+      if castable(MindBlast,"target") and not moving() and cansee("player","target") then
         return cast(MindBlast,"target")
       end
       if castable(ShadowWordPain,"target") and moving() and UnitIsPlayer("target") then
@@ -673,7 +673,7 @@ Routine:RegisterRoutine(function()
           return cast(PsychicScream,"target")
         end
       end
-      if castable(Silence,"target") and not debuff(PsychicScream,"target") and not isProtected(object) and targetclass == "Warlock" or targetclass == "Priest" or targetclass == "Paladin" or targetclass == "Mage" or targetclass == "Druid" or targetclass == "Shaman" or (targetclass == "Hunter" and distance("player","target") <= 7) then
+      if castable(Silence,"target") and not debuff(PsychicScream,"target") and targetclass == "Warlock" or targetclass == "Priest" or targetclass == "Paladin" or targetclass == "Mage" or targetclass == "Druid" or targetclass == "Shaman" or (targetclass == "Hunter" and distance("player","target") <= 7) then
         return cast(Silence,"target")
       end
     end
@@ -782,7 +782,7 @@ Routine:RegisterRoutine(function()
     elseif not wowex.wowexStorage.read("useHeals") then
       if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
         for object in OM:Objects(OM.Types) do
-          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) --[[and UnitInParty(object)]] then -- if friendly party player in range
+          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) and UnitInParty(object) then -- if friendly party player in range
             if castable(PowerWordShield,object) and not debuff(6788,object) and not buff(PowerWordShield,object) and health(object) <= 15 then
               return cast(PowerWordShield,object)
             end
