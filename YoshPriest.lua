@@ -641,18 +641,20 @@ Routine:RegisterRoutine(function()
   end
 
   local function Dot() -- off-target dotting
-    if UnitAffectingCombat("player") and not mounted() and not UnitIsDeadOrGhost("target") and mana >= 50 and enemiesAround("player", 10) >= 2 then
-      for object in OM:Objects(OM.Types.Player) do
-        if UnitIsPlayer(object) and UnitCanAttack("player",object) and UnitTargetingUnit(object,"player") and distance("player",object) <= 30 and not UnitTargetingUnit("player",object) then
+    if wowex.wowexStorage.read('dotallplayers') then
+      if UnitAffectingCombat("player") and not mounted() and not UnitIsDeadOrGhost("target") and mana >= 50 then
+        for object in OM:Objects(OM.Types.Player) do
+          if UnitIsPlayer(object) and UnitCanAttack("player",object) and UnitTargetingUnit(object,"player") and distance("player",object) <= 30 and not UnitTargetingUnit("player",object) then
           --if IsAutoRepeatAction(1) then 
           --  Debug(8092,"Stopping wand to DOT")
           --  Eval('RunMacroText("/stopcasting")', 'player')
           --end
-          if castable(ShadowWordPain,object) and not debuff(ShadowWordPain,object) and health(object) >= 10 and not IsAutoRepeatAction(1) then
-            return cast(ShadowWordPain,object)
-          end
-          if castable(DevouringPlague,object) and not debuff(DevouringPlague,object) and not IsAutoRepeatAction(1) and health(object) >= 50 then
-            return cast(DevouringPlague,object)
+            if castable(ShadowWordPain,object) and not debuff(ShadowWordPain,object) and health(object) >= 10 and not IsAutoRepeatAction(1) then
+              return cast(ShadowWordPain,object)
+            end
+            if castable(DevouringPlague,object) and not debuff(DevouringPlague,object) and not IsAutoRepeatAction(1) and health(object) >= 50 then
+              return cast(DevouringPlague,object)
+            end
           end
         end
       end
@@ -705,12 +707,7 @@ Routine:RegisterRoutine(function()
               if isDiseased(tank()) and castable(CureDisease,tank()) then
                 return cast(CureDisease,tank())
               end
-              --if isMagic(tank()) and castable(DispelMagic,tank()) then
-              --  return cast(DispelMagic,tank())
-              --end
-              --if castable(PowerWordShield,object) and not debuff(6788,object) and not buff(PowerWordShield,object) and health(object) <= 70 then
-              --  return cast(PowerWordShield,object)
-              --end
+              -- then heal rest of group
               if castable(Renew,object) and not buff(Renew,object) and health(object) <= 85 then
                 return cast(Renew,object)
               end
@@ -729,23 +726,10 @@ Routine:RegisterRoutine(function()
               if isDiseased(object) and castable(CureDisease,object) then
                 return cast(CureDisease,object)
               end
-              --if isMagic(object) and castable(DispelMagic,object) then
-              --  return cast(DispelMagic,object)
-              --end
             else -- in combat but not in a party (dungeon)
               if health() <= 45 and IsAutoRepeatAction(1) and ((UnitPower("player") >= manacost(PowerWordShield)) or (UnitPower("player") >= manacost(Renew)) or (UnitPower("player") >= manacost(FlashHeal))) then
                 Debug(8092,"Stopping wand to heal")
                 Eval('RunMacroText("/stopcasting")', 'player')
-              end
-              -- Defensive dispel
-              if isMagic(object) and castable(DispelMagic,object) then
-                for i=1,40 do
-                local name = UnitBuff("target",i)
-                  if name == "Shadow Word: Pain" or name == "Corruption" or name == "Immolate" or name == "Fear" or name == "Death Coil" or name == "Howl of Terror" or name == "Frost Nova" or name == "Frost Bolt" or name == "Hunter's Mark" or name == "Polymorph" or name == "Hibernate" or name == "Hammer of Justice" or name == "Entangling Roots" then
-                    Eval('RunMacroText("/stopcasting")', 'player')
-                    return cast(DispelMagic,object)
-                  else break end
-                end              
               end
               --if health() <= 50 then
               --  Eval('RunMacroText("/use Greater Healing Potion")', 'player')
@@ -791,34 +775,22 @@ Routine:RegisterRoutine(function()
             if isDiseased(object) and castable(AbolishDisease,object) and not UnitIsDeadOrGhost(object) then
               return cast(AbolishDisease,object)
             end
-            if isMagic(object) and castable(DispelMagic,object) and not UnitIsDeadOrGhost(object) then
-              return cast(DispelMagic,object)
-            end
           end
         end
       end
-    end
-    -- Defensive dispel
-    if wowex.wowexStorage.read("useDefensiveDispel") then
-      if wowex.wowexStorage.read('importantdefdispel') then
-        if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
-          if isMagic(object) and castable(DispelMagic,object) then
-            for i=1,40 do
-            local name = UnitBuff("target",i)
-              if name == "Shadow Word: Pain" or name == "Corruption" or name == "Immolate" or name == "Fear" or name == "Death Coil" or name == "Howl of Terror" or name == "Frost Nova" or name == "Frost Bolt" or name == "Hunter's Mark" or name == "Polymorph" or name == "Hibernate" or name == "Hammer of Justice" or name == "Entangling Roots" then
-                Eval('RunMacroText("/stopcasting")', 'player')
-                return cast(DispelMagic,object)
-              else break end
+    elseif not wowex.wowexStorage.read("useHeals") then
+      if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
+        for object in OM:Objects(OM.Types) do
+          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) --[[and UnitInParty(object)]] then -- if friendly party player in range
+            if castable(PowerWordShield,object) and not debuff(6788,object) and not buff(PowerWordShield,object) and health(object) <= 15 then
+              return cast(PowerWordShield,object)
             end
           end
         end
-      elseif not wowex.wowexStorage.read('importantdefdispel') then
-        if isMagic("player") then
-          return cast(DispelMagic,"player")
-        end            
       end
     end
   end
+
   local function Dps()
     if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") then
       if (cooldown(MindBlast) <= 1.6 and IsAutoRepeatAction(1) and health("target") >= 60 and not debuff(DevouringPlague,"target")) and (UnitPower("player") >= manacost(MindBlast) or UnitPower("player") >= manacost(ShadowWordPain)) then
@@ -874,25 +846,6 @@ Routine:RegisterRoutine(function()
   end
 
   local function pvp()
-    -- Offensive dispell
-    if wowex.wowexStorage.read("useOffensiveDispel") then
-      if wowex.wowexStorage.read('importantoffdispel') then
-        if isMagicBuff("target") and castable(DispelMagic,"target") and UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not UnitIsDeadOrGhost("target") and not mounted() then
-          for i=1,40 do
-            local name = UnitBuff("target",i)
-            if name == "Arcane Power" or name == "Innervate" or name == "Ghost Wolf" or name == "Sacrifice" or name == "Fear Ward" or name == "Power Word: Fortitude" or name == "Power Word: Shield" or name == "Blessing of Freedom" or name == "Blessing of Protection" or name == "Blessing of Sacrifice" or name == "Regrowth" or name == "Cone of Cold" or name == "Shadow Ward" or name == "Mana Shield" or name == "Presence of Mind" or name == "Ice Barrier" or name == "Nature's Swiftness" or name == "Dampen Magic" then
-              Eval('RunMacroText("/stopcasting")', 'player')
-              return cast(DispelMagic,"target")
-            else break end
-          end
-        end
-      elseif not wowex.wowexStorage.read('importantoffdispel') then
-        if isMagicBuff("target") then
-          return cast(DispelMagic,"target")
-        end
-      end
-    end
-
     if race == "Undead" then
       if debuff(5782,"player") or debuff(6213,"player") or debuff(6215,"player") or debuff(5484,"player") or debuff(17928,"player") or debuff(PsychicScream,"player") then
         return cast(7744,"player") -- Will of Forsaken
@@ -927,6 +880,48 @@ Routine:RegisterRoutine(function()
               InteractUnit(flag)
             end
           end
+        end
+      end
+    end
+  end
+
+  local function DefensiveDispel()
+    if wowex.wowexStorage.read("useDefensiveDispel") then
+      if wowex.wowexStorage.read('importantdefdispel') then
+        if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
+          if isMagic(object) and castable(DispelMagic,object) then
+            for i=1,40 do
+            local name = UnitBuff("target",i)
+              if name == "Shadow Word: Pain" or name == "Corruption" or name == "Immolate" or name == "Fear" or name == "Death Coil" or name == "Howl of Terror" or name == "Frost Nova" or name == "Frost Bolt" or name == "Hunter's Mark" or name == "Polymorph" or name == "Hibernate" or name == "Hammer of Justice" or name == "Entangling Roots" then
+                Eval('RunMacroText("/stopcasting")', 'player')
+                return cast(DispelMagic,object)
+              else break end
+            end
+          end
+        end
+      elseif not wowex.wowexStorage.read('importantdefdispel') then
+        if isMagic("player") then
+          return cast(DispelMagic,"player")
+        end            
+      end
+    end  
+  end
+
+  local function OffensiveDispel()
+    if wowex.wowexStorage.read("useOffensiveDispel") then
+      if wowex.wowexStorage.read('importantoffdispel') then
+        if isMagicBuff("target") and castable(DispelMagic,"target") and UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not UnitIsDeadOrGhost("target") and not mounted() then
+          for i=1,40 do
+            local name = UnitBuff("target",i)
+            if name == "Arcane Power" or name == "Innervate" or name == "Ghost Wolf" or name == "Sacrifice" or name == "Fear Ward" or name == "Power Word: Fortitude" or name == "Power Word: Shield" or name == "Blessing of Freedom" or name == "Blessing of Protection" or name == "Blessing of Sacrifice" or name == "Regrowth" or name == "Cone of Cold" or name == "Shadow Ward" or name == "Mana Shield" or name == "Presence of Mind" or name == "Ice Barrier" or name == "Nature's Swiftness" or name == "Dampen Magic" then
+              Eval('RunMacroText("/stopcasting")', 'player')
+              return cast(DispelMagic,"target")
+            else break end
+          end
+        end
+      elseif not wowex.wowexStorage.read('importantoffdispel') then
+        if isMagicBuff("target") then
+          return cast(DispelMagic,"target")
         end
       end
     end
@@ -995,6 +990,7 @@ Routine:RegisterRoutine(function()
       if PreCombat() then return true end
       if Opener() then return true end
       if pvp() then return true end
+      if DefensiveDispel() then return true end
       if Dismounter() then return true end
     end
     return false
@@ -1008,6 +1004,8 @@ Routine:RegisterRoutine(function()
       if Interrupt() then return true end
       if Dot() then return true end
       if pvp() then return true end
+      if OffensiveDispel() then return true end
+      if DefensiveDispel() then return true end
       if healthstone() then return true end
       if Dismounter() then return true end
       if wand() then return true end
@@ -1072,6 +1070,8 @@ local mytable = {
         { key = "heading", type = "heading", color = 'FF7C0A', text = "Dispels" },
         { key = "importantoffdispel",  type = "checkbox", text = "Only Dispel Important Buffs", desc = "" },
         { key = "importantdefdispel",  type = "checkbox", text = "Only Dispel Important Debuffs", desc = "" },
+        { key = "heading", type = "heading", color = 'FF7C0A', text = "DoTs" },
+        { key = "dotallplayers",  type = "checkbox", text = "DoT all Nearby Players", desc = "" },
       }
     },
   },
