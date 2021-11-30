@@ -740,7 +740,7 @@ Routine:RegisterRoutine(function()
                 local name = UnitBuff("target",i)
                   if name == "Shadow Word: Pain" or name == "Corruption" or name == "Immolate" or name == "Fear" or name == "Death Coil" or name == "Howl of Terror" or name == "Frost Nova" or name == "Frost Bolt" or name == "Hunter's Mark" or name == "Polymorph" or name == "Hibernate" or name == "Hammer of Justice" or name == "Entangling Roots" then
                     Eval('RunMacroText("/stopcasting")', 'player')
-                    return cast(DispelMagic,"target")
+                    return cast(DispelMagic,object)
                   else break end
                 end              
               end
