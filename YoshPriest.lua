@@ -218,7 +218,7 @@ Routine:RegisterRoutine(function()
   local targetmana = (UnitPower("target") / UnitPowerMax("target")) * 100
   local inInstance, instanceType = IsInInstance()
   local targetclass = UnitClass("target")
-
+  local race = UnitRace("player")
 
   function isProtected(unit)
     if buff(1020,unit) or debuff(12826,unit) or buff(45438,unit) or buff(642,unit) or buff(1022,unit) or debuff(33786,unit) then 
@@ -861,6 +861,12 @@ Routine:RegisterRoutine(function()
             return cast(DispelMagic,"target")
           else break end
         end
+      end
+    end
+
+    if race == "Undead" then
+      if debuff(5782,"player") or debuff(6213,"player") or debuff(6215,"player") or debuff(5484,"player") or debuff(17928,"player") or debuff(PsychicScream,"player") then
+        return cast(7744,"player") -- Will of Forsaken
       end
     end
 
