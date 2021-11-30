@@ -572,7 +572,7 @@ Routine:RegisterRoutine(function()
   end
 
   local function Interrupt()
-    if UnitAffectingCombat("player") then
+    if UnitAffectingCombat("player") and not mounted() then
     if instanceType == "pvp" then
       for object in OM:Objects(OM.Types.Player) do
         if UnitCanAttack("player",object) then
@@ -680,9 +680,9 @@ Routine:RegisterRoutine(function()
   end
 
   local function Healing()
-    --In combat healing
     if wowex.wowexStorage.read("useHeals") then
-      if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
+      --In combat healing
+      if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 and not mounted() then -- in combat
         for object in OM:Objects(OM.Types) do
           if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) and UnitInParty(object) then -- if friendly party player in range
           -- priotise tank
@@ -758,7 +758,7 @@ Routine:RegisterRoutine(function()
         end
       end
       -- Out of Combat healing
-      if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") then -- if not in combat, heal everyone
+      if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() then -- if not in combat, heal everyone
         for object in OM:Objects(OM.Types) do
           if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not isCasting("player") and UnitInParty(object) then -- if friendly player in range
             if UnitIsDeadOrGhost(object) and not UnitAffectingCombat("player") then
@@ -780,7 +780,8 @@ Routine:RegisterRoutine(function()
         end
       end
     elseif not wowex.wowexStorage.read("useHeals") then
-      if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
+      -- in combat
+      if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 and not mounted() then -- in combat
         for object in OM:Objects(OM.Types) do
           if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) and UnitInParty(object) then -- if friendly party player in range
             if castable(PowerWordShield,object) and not debuff(6788,object) and not buff(PowerWordShield,object) and health(object) <= 15 then
@@ -792,11 +793,33 @@ Routine:RegisterRoutine(function()
           return cast(PowerWordShield,"player")
         end
       end
+      -- out of combat
+      if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() then -- if not in combat, heal everyone
+        for object in OM:Objects(OM.Types) do
+          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not isCasting("player") and UnitInParty(object) then -- if friendly player in range
+            if UnitIsDeadOrGhost(object) and not UnitAffectingCombat("player") then
+              return cast(Resurrection,object)
+            end
+            if castable(Renew,object) and not buff(Renew,object) and health(object) <= 70 and not UnitIsDeadOrGhost(object) then
+              return cast(Renew,object)
+            end
+            if castable(Heal,object) and health() <= 30 and not moving() and not UnitIsDeadOrGhost(object) then
+              return cast(Heal,object)
+            end
+            if castable(LesserHeal,object) and health() <= 60 and not moving() and not UnitIsDeadOrGhost(object) then
+              return cast(LesserHeal,object)
+            end
+            if isDiseased(object) and castable(AbolishDisease,object) and not UnitIsDeadOrGhost(object) then
+              return cast(AbolishDisease,object)
+            end
+          end
+        end
+      end
     end
   end
 
   local function Dps()
-    if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") then
+    if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") and not mounted() then
       if (cooldown(MindBlast) <= 1.6 and IsAutoRepeatAction(1) and health("target") >= 60 and not debuff(DevouringPlague,"target")) and (UnitPower("player") >= manacost(MindBlast) or UnitPower("player") >= manacost(ShadowWordPain)) then
         Debug(8092,"Stopping wand to mind blast")
         Eval('RunMacroText("/stopcasting")', 'player')
@@ -826,7 +849,7 @@ Routine:RegisterRoutine(function()
   end
 
   local function Buff()
-    if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") then
+    if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() then
       for object in OM:Objects(OM.Types.Players) do
         if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and mana >= 70 and UnitInParty(object) then -- if friendly player in range
           if castable(PowerWordFortitude,object) and not buff(PowerWordFortitude,object) then
@@ -854,7 +877,7 @@ Routine:RegisterRoutine(function()
     
 
   local function FriendlyBuffer()
-    if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") then
+    if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() then
       for object in OM:Objects(OM.Types.Player) do
         if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 then
           if bufftimer < GetTime() then
@@ -876,9 +899,9 @@ Routine:RegisterRoutine(function()
       end
     end
 
-    if IsFalling("player") then
-      return cast(Levitate,"player")
-    end
+    --if IsFalling("player") and not buff(Levitate,"player") then
+    --  return cast(Levitate,"player")
+    --end
 
     if instanceType == "pvp" then
       for flag in OM:Objects(OM.Types.GameObject) do
@@ -1003,8 +1026,8 @@ Routine:RegisterRoutine(function()
   end
 
   local function PreCombat()
-    if UnitExists("target") and not IsEatingOrDrinking("player") and distance("player","target") <= 45 and not UnitIsDeadOrGhost("target") and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
-      if castable(Shadowform,"player") and not buff(Shadowform,"player") then -- Shadowform
+    if UnitExists("target") and not IsEatingOrDrinking("player") and distance("player","target") <= 45 and not mounted() and not UnitIsDeadOrGhost("target") and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
+      if not buff(Shadowform,"player") then -- Shadowform
         return cast(Shadowform,"player")
       end      
       if castable(PowerWordShield,"player") and not debuff(6788,"player") and not buff(PowerWordShield,"player") then
@@ -1017,7 +1040,7 @@ Routine:RegisterRoutine(function()
   end
 
   local function wand()
-    if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") and instanceType ~= "party" then
+    if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") and instanceType ~= "party" and not mounted() then
       if UnitHealth("target") <= 5 and not IsAutoRepeatAction(1) then
         FaceObject("target")
         Debug(8092,"STARTING wand")
