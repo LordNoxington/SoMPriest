@@ -907,6 +907,34 @@ Routine:RegisterRoutine(function()
     end  
   end
 
+  local function DispelFriendly()
+    if wowex.wowexStorage.read("useDefensiveDispel") then
+      if wowex.wowexStorage.read("friendlydispel") then
+        if wowex.wowexStorage.read('importantdefdispel') then
+          for object in OM:Objects(OM.Types.Player) do
+            if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
+              if isMagic(object) and castable(DispelMagic,object) then
+                for i=1,40 do
+                local name = UnitDebuff(object,i)
+                  if name == "Shadow Word: Pain" or name == "Corruption" or name == "Immolate" or name == "Fear" or name == "Death Coil" or name == "Howl of Terror" or name == "Frost Nova" or name == "Frost Bolt" or name == "Hunter's Mark" or name == "Polymorph" or name == "Hibernate" or name == "Hammer of Justice" or name == "Entangling Roots" then
+                    --Eval('RunMacroText("/stopcasting")', 'player')
+                    return cast(DispelMagic,object)
+                  else break end
+                end
+              end
+            end
+          end
+        elseif not wowex.wowexStorage.read('importantdefdispel') then
+          for object in OM:Objects(OM.Types.Player) do
+            if isMagic(object) and castable(DispelMagic,object) then
+              return cast(DispelMagic,object)
+            end
+          end
+        end            
+      end
+    end  
+  end
+
   local function OffensiveDispel()
     if wowex.wowexStorage.read("useOffensiveDispel") then
       if wowex.wowexStorage.read('importantoffdispel') then
@@ -991,6 +1019,7 @@ Routine:RegisterRoutine(function()
       if Opener() then return true end
       if pvp() then return true end
       if DefensiveDispel() then return true end
+      if DispelFriendly() then return true end
       if Dismounter() then return true end
     end
     return false
@@ -1006,6 +1035,7 @@ Routine:RegisterRoutine(function()
       if pvp() then return true end
       if OffensiveDispel() then return true end
       if DefensiveDispel() then return true end
+      if DispelFriendly() then return true end
       if healthstone() then return true end
       if Dismounter() then return true end
       if wand() then return true end
@@ -1068,6 +1098,7 @@ local mytable = {
         { key = "heading", type = "heading", color = 'FF7C0A', text = "Loot" },
         { key = "autoloot",  type = "checkbox", text = "Auto Loot", desc = "" },
         { key = "heading", type = "heading", color = 'FF7C0A', text = "Dispels" },
+        { key = "friendlydispel",  type = "checkbox", text = "Dispel Friendly Players?", desc = "" },
         { key = "importantoffdispel",  type = "checkbox", text = "Only Dispel Important Buffs", desc = "" },
         { key = "importantdefdispel",  type = "checkbox", text = "Only Dispel Important Debuffs", desc = "" },
         { key = "heading", type = "heading", color = 'FF7C0A', text = "DoTs" },
