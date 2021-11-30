@@ -888,7 +888,7 @@ Routine:RegisterRoutine(function()
   local function DefensiveDispel()
     if wowex.wowexStorage.read("useDefensiveDispel") then
       if wowex.wowexStorage.read('importantdefdispel') then
-        if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
+        if not IsEatingOrDrinking("player") and health("target") >= 10 and not mounted() then
           if isMagic("player") and castable(DispelMagic,"player") then
             for i=1,40 do
             local name = UnitDebuff("player",i)
@@ -900,8 +900,10 @@ Routine:RegisterRoutine(function()
           end
         end
       elseif not wowex.wowexStorage.read('importantdefdispel') then
-        if isMagic("player") then
-          return cast(DispelMagic,"player")
+        if not IsEatingOrDrinking("player") and health("target") >= 10 and not mounted() then
+          if isMagic("player") and castable(DispelMagic,"player") then
+            return cast(DispelMagic,"player")
+          end
         end            
       end
     end  
@@ -912,7 +914,7 @@ Routine:RegisterRoutine(function()
       if wowex.wowexStorage.read("friendlydispel") then
         if wowex.wowexStorage.read('importantdefdispel') then
           for object in OM:Objects(OM.Types.Player) do
-            if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
+            if not IsEatingOrDrinking("player") and health("target") >= 10 and not UnitIsDeadOrGhost(object) and not mounted() then
               if isMagic(object) and castable(DispelMagic,object) then
                 for i=1,40 do
                 local name = UnitDebuff(object,i)
@@ -926,8 +928,10 @@ Routine:RegisterRoutine(function()
           end
         elseif not wowex.wowexStorage.read('importantdefdispel') then
           for object in OM:Objects(OM.Types.Player) do
-            if isMagic(object) and castable(DispelMagic,object) then
-              return cast(DispelMagic,object)
+            if not IsEatingOrDrinking("player") and health("target") >= 10 and not UnitIsDeadOrGhost(object) and not mounted() then
+              if isMagic(object) and castable(DispelMagic,object) then
+                return cast(DispelMagic,object)
+              end
             end
           end
         end            
@@ -948,7 +952,7 @@ Routine:RegisterRoutine(function()
           end
         end
       elseif not wowex.wowexStorage.read('importantoffdispel') then
-        if isMagicBuff("target") then
+        if isMagicBuff("target") and castable(DispelMagic,"target") and UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not UnitIsDeadOrGhost("target") and not mounted() then
           return cast(DispelMagic,"target")
         end
       end
