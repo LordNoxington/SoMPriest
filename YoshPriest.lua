@@ -682,7 +682,7 @@ Routine:RegisterRoutine(function()
     --*ic
     if wowex.wowexStorage.read("useHeals") then
       if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
-        for object in OM:Objects(OM.Types) do
+        for object in OM:Objects(OM.Types.Player) do
           if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) --[[and UnitInParty(object)]] then -- if friendly party player in range
           -- priotise tank
             if instanceType == "party" then
@@ -758,7 +758,7 @@ Routine:RegisterRoutine(function()
       end
       --*ooc
       if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") then -- if not in combat, heal everyone
-        for object in OM:Objects(OM.Types) do
+        for object in OM:Objects(OM.Types.Player) do
           if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not isCasting("player") then -- if friendly player in range
             if UnitIsDeadOrGhost(object) and not UnitAffectingCombat("player") then
               return cast(Resurrection,object)
@@ -780,7 +780,7 @@ Routine:RegisterRoutine(function()
       end
     elseif not wowex.wowexStorage.read("useHeals") then
       if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
-        for object in OM:Objects(OM.Types) do
+        for object in OM:Objects(OM.Types.Player) do
           if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) --[[and UnitInParty(object)]] then -- if friendly party player in range
             if castable(PowerWordShield,object) and not debuff(6788,object) and not buff(PowerWordShield,object) and health(object) <= 15 then
               return cast(PowerWordShield,object)
@@ -823,7 +823,7 @@ Routine:RegisterRoutine(function()
 
   local function Buff()
     if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") then
-      for object in OM:Objects(OM.Types) do
+      for object in OM:Objects(OM.Types.Player) do
         if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 20 --[[and (mana >= 50 or UnitInParty(object))]] then -- if friendly player in range
           if castable(PowerWordFortitude,object) and not buff(PowerWordFortitude,object) then
             return cast(PowerWordFortitude,object)
