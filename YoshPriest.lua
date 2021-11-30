@@ -7,6 +7,7 @@ local Draw = Tinkr.Util.Draw:New()
 local OM = Tinkr.Util.ObjectManager
 local lastdebugmsg = ""
 local lastdebugtime = 0
+local bufftimer = 0 
 _G.PriestSpellQueue = {}
 Tinkr:require('scripts.cromulon.libs.Libdraw.Libs.LibStub.LibStub', wowex) --! If you are loading from disk your rotaiton. 
 Tinkr:require('scripts.cromulon.libs.Libdraw.LibDraw', wowex) 
@@ -679,11 +680,11 @@ Routine:RegisterRoutine(function()
   end
 
   local function Healing()
-    --*ic
+    --In combat healing
     if wowex.wowexStorage.read("useHeals") then
       if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 then -- in combat
         for object in OM:Objects(OM.Types) do
-          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) --[[and UnitInParty(object)]] then -- if friendly party player in range
+          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) and UnitInParty(object) then -- if friendly party player in range
           -- priotise tank
             if instanceType == "party" then
               if castable(PowerWordShield,tank()) and not debuff(6788,tank()) and not buff(PowerWordShield,tank()) and health(tank()) <= 70 then
@@ -756,10 +757,10 @@ Routine:RegisterRoutine(function()
           end
         end
       end
-      --*ooc
+      -- Out of Combat healing
       if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") then -- if not in combat, heal everyone
         for object in OM:Objects(OM.Types) do
-          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not isCasting("player") then -- if friendly player in range
+          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not isCasting("player") and UnitInParty(object) then -- if friendly player in range
             if UnitIsDeadOrGhost(object) and not UnitAffectingCombat("player") then
               return cast(Resurrection,object)
             end
@@ -786,6 +787,9 @@ Routine:RegisterRoutine(function()
               return cast(PowerWordShield,object)
             end
           end
+        end
+        if castable(PowerWordShield,"player") and not debuff(6788,"player") and not buff(PowerWordShield,"player") and health("player") <= 90 and not IsAutoRepeatAction(1) and UnitTargetingUnit("target","player") then
+          return cast(PowerWordShield,"player")
         end
       end
     end
@@ -823,27 +827,47 @@ Routine:RegisterRoutine(function()
 
   local function Buff()
     if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") then
-      for object in OM:Objects(OM.Types) do
-        if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 20 --[[and (mana >= 50 or UnitInParty(object))]] then -- if friendly player in range
+      for object in OM:Objects(OM.Types.Players) do
+        if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and mana >= 70 and UnitInParty(object) then -- if friendly player in range
           if castable(PowerWordFortitude,object) and not buff(PowerWordFortitude,object) then
             return cast(PowerWordFortitude,object)
           end
           if castable(ShadowProtection,object) and not buff(ShadowProtection,object) then
             return cast(ShadowProtection,object)
           end
-          if castable(InnerFire,"player") and not buff(InnerFire,"player") then
-            return cast(InnerFire,"player")
+        end
+      end
+      if castable(PowerWordFortitude,"player") and not buff(PowerWordFortitude,"player") then
+        return cast(PowerWordFortitude,"player")
+      end
+      if castable(ShadowProtection,"player") and not buff(ShadowProtection,"player") then
+        return cast(ShadowProtection,"player")
+      end
+      if castable(InnerFire,"player") and not buff(InnerFire,"player") then
+        return cast(InnerFire,"player")
+      end
+      if castable(2652,"player") and not buff(2652,"player") and mana >= 90 then -- touch of weakness Rank 1
+        return cast(2652,"player")
+      end
+    end
+  end
+    
+
+  local function FriendlyBuffer()
+    if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") then
+      for object in OM:Objects(OM.Types.Player) do
+        if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 then
+          if bufftimer < GetTime() then
+            if castable(PowerWordFortitude,object) and not buff(PowerWordFortitude,object) then
+              bufftimer = GetTime() + 60
+              return cast(PowerWordFortitude,object)
+            end
           end
-          if castable(2652,"player") and not buff(2652,"player") and mana >= 90 then -- touch of weakness Rank 1
-            return cast(2652,"player")
-          end
-          if castable(Shadowform,"player") and not buff(Shadowform,"player") and health() >= 99 then -- Shadowform
-            return cast(Shadowform,"player")
-          end   
         end
       end
     end
   end
+
 
   local function pvp()
     if race == "Undead" then
@@ -1019,6 +1043,7 @@ Routine:RegisterRoutine(function()
       if Loot() then return true end
       if Healing() then return true end
       if Buff() then return true end
+      if FriendlyBuffer() then return true end
       if PreCombat() then return true end
       if Opener() then return true end
       if pvp() then return true end
@@ -1059,7 +1084,7 @@ local button_example = {
     key = "useHeals",
     buttonname = "useHeals",
     texture = "spell_holy_flashheal",
-    tooltip = "Use Heals",
+    tooltip = "Use Heals in Combat",
     text = "Use Heals",
     setx = "TOP",
     parent = "settings",
