@@ -676,10 +676,10 @@ Routine:RegisterRoutine(function()
       if UnitAffectingCombat("player") and not mounted() and not UnitIsDeadOrGhost("target") and mana >= 50 then
         for object in OM:Objects(OM.Types.Unit) do
           if UnitCanAttack("player",object) and UnitTargetingUnit(object,"player") and distance("player",object) <= 36 and not UnitTargetingUnit("player",object) and not UnitIsPlayer(object) then
-            if IsAutoRepeatAction(1) and castable(ShadowWordPain,object) and not debuff(ShadowWordPain,object) and health(object) >= 10 then 
-              Debug(8092,"Stopping wand to DOT")
-              Eval('RunMacroText("/stopcasting")', 'player')
-            end
+            --if IsAutoRepeatAction(1) and not debuff(ShadowWordPain,object) and health(object) >= 10 then 
+            --  Debug(8092,"Stopping wand to DOT")
+            --  Eval('RunMacroText("/stopcasting")', 'player')
+            --end
             if castable(ShadowWordPain,object) and not debuff(ShadowWordPain,object) and health(object) >= 10 and not IsAutoRepeatAction(1) then
               return cast(ShadowWordPain,object)
             end
@@ -707,11 +707,11 @@ Routine:RegisterRoutine(function()
   end
 
   local function Healing()
-    if wowex.wowexStorage.read("useHeals") then
+    if wowex.wowexStorage.read("CombatHeals") then
       --In combat healing
       if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 and not mounted() then -- in combat
         for object in OM:Objects(OM.Types) do
-          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) and UnitInParty(object) then -- if friendly party player in range
+          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) and (UnitInParty(object) or Object("player") == object) then -- if friendly party player in range
           -- priotise tank
             if instanceType == "party" then
               if castable(PowerWordShield,tank()) and not debuff(6788,tank()) and not buff(PowerWordShield,tank()) and health(tank()) <= 70 then
@@ -754,7 +754,7 @@ Routine:RegisterRoutine(function()
               if isDiseased(object) and castable(CureDisease,object) then
                 return cast(CureDisease,object)
               end
-            else -- in combat but not in a party (dungeon)
+            else -- in combat but not in a instance
               if health() <= 45 and IsAutoRepeatAction(1) and ((UnitPower("player") >= manacost(PowerWordShield)) or (UnitPower("player") >= manacost(Renew)) or (UnitPower("player") >= manacost(FlashHeal))) then
                 Debug(8092,"Stopping wand to heal")
                 Eval('RunMacroText("/stopcasting")', 'player')
@@ -784,29 +784,7 @@ Routine:RegisterRoutine(function()
           end
         end
       end
-      -- Out of Combat healing
-      if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() then -- if not in combat, heal everyone
-        for object in OM:Objects(OM.Types) do
-          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not isCasting("player") and UnitInParty(object) then -- if friendly player in range
-            if UnitIsDeadOrGhost(object) and not UnitAffectingCombat("player") then
-              return cast(Resurrection,object)
-            end
-            if castable(Renew,object) and not buff(Renew,object) and health(object) <= 70 and not UnitIsDeadOrGhost(object) then
-              return cast(Renew,object)
-            end
-            if castable(Heal,object) and health() <= 30 and not moving() and not UnitIsDeadOrGhost(object) then
-              return cast(Heal,object)
-            end
-            if castable(LesserHeal,object) and health() <= 60 and not moving() and not UnitIsDeadOrGhost(object) then
-              return cast(LesserHeal,object)
-            end
-            if isDiseased(object) and castable(AbolishDisease,object) and not UnitIsDeadOrGhost(object) then
-              return cast(AbolishDisease,object)
-            end
-          end
-        end
-      end
-    elseif not wowex.wowexStorage.read("useHeals") then
+    elseif not wowex.wowexStorage.read("CombatHeals") then
       -- in combat
       if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 and not mounted() then -- in combat
         for object in OM:Objects(OM.Types) do
@@ -823,7 +801,7 @@ Routine:RegisterRoutine(function()
       -- out of combat
       if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() then -- if not in combat, heal everyone
         for object in OM:Objects(OM.Types) do
-          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not isCasting("player") and UnitInParty(object) then -- if friendly player in range
+          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not isCasting("player") and (UnitInParty(object) or Object("player") == object) then -- if friendly player in range
             if UnitIsDeadOrGhost(object) and not UnitAffectingCombat("player") then
               return cast(Resurrection,object)
             end
@@ -841,25 +819,13 @@ Routine:RegisterRoutine(function()
             end
           end
         end
-        if castable(Renew,"player") and not buff(Renew,"player") and health("player") <= 70 then
-          return cast(Renew,"player")
-        end
-        if castable(Heal,"player") and health() <= 30 and not moving() then
-          return cast(Heal,"player")
-        end
-        if castable(LesserHeal,"player") and health() <= 60 and not moving() then
-          return cast(LesserHeal,"player")
-        end
-        if isDiseased("player") and castable(AbolishDisease,"player")  then
-          return cast(AbolishDisease,"player")
-        end
       end
     end
   end
 
   local function Dps()
     if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") then
-      if (cooldown(MindBlast) <= 1.6 and IsAutoRepeatAction(1) and health("target") >= 60 and not debuff(DevouringPlague,"target")) and (UnitPower("player") >= manacost(MindBlast)) then
+      if (cooldown(MindBlast) <= wowex.wowexStorage.read("wandspeed") and IsAutoRepeatAction(1) and health("target") >= 60 and not debuff(DevouringPlague,"target")) and (UnitPower("player") >= manacost(MindBlast)) then
         Debug(8092,"Stopping wand to mind blast")
         Eval('RunMacroText("/stopcasting")', 'player')
       end
@@ -908,6 +874,9 @@ Routine:RegisterRoutine(function()
       end
       if castable(ShadowProtection,"player") and not buff(ShadowProtection,"player") then
         return cast(ShadowProtection,"player")
+      end
+      if castable(Shadowform,"player") and not buff(Shadowform,"player") and health() >= 70 then
+        return cast(Shadowform,"player")
       end
       if castable(InnerFire,"player") and not buff(InnerFire,"player") then
         return cast(InnerFire,"player")
@@ -1091,7 +1060,7 @@ Routine:RegisterRoutine(function()
           return cast(5019,"target")
         end
 
-        if (cooldown(MindBlast) >= 1.6 or health("target") <= 10) and (debuff(ShadowWordPain,"target") or health("target") <= 20) and not IsAutoRepeatAction(1) and not isCasting("player") and distance("player","target") <= 30 and not moving() and not UnitIsPlayer("target") then
+        if (cooldown(MindBlast) >= wowex.wowexStorage.read("wandspeed") or health("target") <= 10) and (debuff(ShadowWordPain,"target") or health("target") <= 20) and not IsAutoRepeatAction(1) and not isCasting("player") and distance("player","target") <= 30 and not moving() and not UnitIsPlayer("target") then
           FaceObject("target")
           Debug(8092,"STARTING wand")
           return cast(5019,"target")
@@ -1149,11 +1118,11 @@ Routine:LoadRoutine(Routine.Specs.Priest)
 
 local button_example = {
   {
-    key = "useHeals",
-    buttonname = "useHeals",
+    key = "CombatHeals",
+    buttonname = "CombatHeals",
     texture = "spell_holy_flashheal",
     tooltip = "Use Heals in Combat",
-    text = "Use Heals",
+    text = "Use Heals in Combat",
     setx = "TOP",
     parent = "settings",
     sety = "TOPRIGHT"
@@ -1165,7 +1134,7 @@ local button_example = {
     tooltip = "Use Defensive Dispels",
     text = "Use Defensive Dispels",
     setx = "TOP",
-    parent = "useHeals",
+    parent = "CombatHeals",
     sety = "TOPRIGHT"
   },  
   {
@@ -1202,6 +1171,8 @@ local mytable = {
       name = "General",
       items = 
       {        
+        { key = "heading", type = "heading", color = 'FF7C0A', text = "Wand" },
+        { key = "wandspeed", label = "Wand Speed", text = wowex.wowexStorage.read("wandspeed"), type = "slider", min = 1, max = 2, step = 0.1},
         { key = "heading", type = "heading", color = 'FF7C0A', text = "Loot" },
         { key = "autoloot",  type = "checkbox", text = "Auto Loot", desc = "" },
         { key = "heading", type = "heading", color = 'FF7C0A', text = "Dispels" },
@@ -1211,7 +1182,7 @@ local mytable = {
         { key = "heading", type = "heading", color = 'FF7C0A', text = "DoTs" },
         { key = "multidot",  type = "checkbox", text = "DoT all Players Targeting Player", desc = "" },
         { key = "multidotunits",  type = "checkbox", text = "DoT all Monsters Targeting Player", desc = "" },
-        { key = "dotallplayers",  type = "checkbox", text = "DoT all Nearby Players", desc = "" },
+        { key = "dotallplayers",  type = "checkbox", text = "DoT all Nearby Players", desc = "" }
       }
     },
   },
