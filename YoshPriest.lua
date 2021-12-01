@@ -645,7 +645,7 @@ Routine:RegisterRoutine(function()
     if wowex.wowexStorage.read('dotallplayers') then
       if UnitAffectingCombat("player") and not mounted() and not UnitIsDeadOrGhost("target") and mana >= 50 then
         for object in OM:Objects(OM.Types.Player) do
-          if UnitCanAttack("player",object) and UnitTargetingUnit(object,"player") and distance("player",object) <= 30 and not UnitTargetingUnit("player",object) then
+          if UnitCanAttack("player",object) and distance("player",object) <= 36 and not UnitTargetingUnit("player",object) then
           --if IsAutoRepeatAction(1) then 
           --  Debug(8092,"Stopping wand to DOT")
           --  Eval('RunMacroText("/stopcasting")', 'player')
@@ -653,8 +653,35 @@ Routine:RegisterRoutine(function()
             if castable(ShadowWordPain,object) and not debuff(ShadowWordPain,object) and health(object) >= 10 and not IsAutoRepeatAction(1) then
               return cast(ShadowWordPain,object)
             end
-            if castable(DevouringPlague,object) and not debuff(DevouringPlague,object) and not IsAutoRepeatAction(1) and health(object) >= 50 then
-              return cast(DevouringPlague,object)
+          end
+        end
+      end
+    end
+    if wowex.wowexStorage.read('multidot') then
+      if UnitAffectingCombat("player") and not mounted() and not UnitIsDeadOrGhost("target") and mana >= 50 then
+        for object in OM:Objects(OM.Types.Player) do
+          if UnitCanAttack("player",object) and UnitTargetingUnit(object,"player") and distance("player",object) <= 36 and not UnitTargetingUnit("player",object) then
+          --if IsAutoRepeatAction(1) then 
+          --  Debug(8092,"Stopping wand to DOT")
+          --  Eval('RunMacroText("/stopcasting")', 'player')
+          --end
+            if castable(ShadowWordPain,object) and not debuff(ShadowWordPain,object) and health(object) >= 10 and not IsAutoRepeatAction(1) then
+              return cast(ShadowWordPain,object)
+            end
+          end
+        end
+      end
+    end
+    if wowex.wowexStorage.read('multidotunits') then
+      if UnitAffectingCombat("player") and not mounted() and not UnitIsDeadOrGhost("target") and mana >= 50 then
+        for object in OM:Objects(OM.Types.Unit) do
+          if UnitCanAttack("player",object) and UnitTargetingUnit(object,"player") and distance("player",object) <= 36 and not UnitTargetingUnit("player",object) and not UnitIsPlayer(object) then
+            if IsAutoRepeatAction(1) and castable(ShadowWordPain,object) and not debuff(ShadowWordPain,object) and health(object) >= 10 then 
+              Debug(8092,"Stopping wand to DOT")
+              Eval('RunMacroText("/stopcasting")', 'player')
+            end
+            if castable(ShadowWordPain,object) and not debuff(ShadowWordPain,object) and health(object) >= 10 and not IsAutoRepeatAction(1) then
+              return cast(ShadowWordPain,object)
             end
           end
         end
@@ -814,16 +841,32 @@ Routine:RegisterRoutine(function()
             end
           end
         end
+        if castable(Renew,"player") and not buff(Renew,"player") and health("player") <= 70 then
+          return cast(Renew,"player")
+        end
+        if castable(Heal,"player") and health() <= 30 and not moving() then
+          return cast(Heal,"player")
+        end
+        if castable(LesserHeal,"player") and health() <= 60 and not moving() then
+          return cast(LesserHeal,"player")
+        end
+        if isDiseased("player") and castable(AbolishDisease,"player")  then
+          return cast(AbolishDisease,"player")
+        end
       end
     end
   end
 
   local function Dps()
-    if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") and not mounted() then
-      if (cooldown(MindBlast) <= 1.6 and IsAutoRepeatAction(1) and health("target") >= 60 and not debuff(DevouringPlague,"target")) and (UnitPower("player") >= manacost(MindBlast) or UnitPower("player") >= manacost(ShadowWordPain)) then
+    if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") then
+      if (cooldown(MindBlast) <= 1.6 and IsAutoRepeatAction(1) and health("target") >= 60 and not debuff(DevouringPlague,"target")) and (UnitPower("player") >= manacost(MindBlast)) then
         Debug(8092,"Stopping wand to mind blast")
         Eval('RunMacroText("/stopcasting")', 'player')
       end
+      --if (castable(ShadowWordPain,"target") and IsAutoRepeatAction(1) and health("target") >= 50 and not debuff(DevouringPlague,"target")) and not debuff(ShadowWordPain,"target") and (UnitPower("player") >= manacost(ShadowWordPain)) then
+      --  Debug(8092,"Stopping wand to re-dot")
+      --  Eval('RunMacroText("/stopcasting")', 'player')
+      --end
       if castable(Shadowform,"player") and not buff(Shadowform,"player") then -- Shadowform
         return cast(Shadowform,"player")
       end
@@ -842,7 +885,7 @@ Routine:RegisterRoutine(function()
       --if castable(ManaBurn,"target") and not moving() and UnitIsPlayer("target") and not isCasting("target") and (targetclass == "Priest" or targetclass == "Mage") and targetmana >= 10 then
       --  return cast(ManaBurn,"target")
       --end
-      if castable(MindFlay,"target") and not moving() and UnitIsPlayer("target") and not isChanneling("player") then     
+      if castable(MindFlay,"target") and not moving() and (UnitIsPlayer("target") or not wowex.wowexStorage.read("useWand")) and not isChanneling("player") then     
         return cast(MindFlay,"target")
       end
     end
@@ -1040,22 +1083,24 @@ Routine:RegisterRoutine(function()
   end
 
   local function wand()
-    if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") and instanceType ~= "party" and not mounted() then
-      if UnitHealth("target") <= 5 and not IsAutoRepeatAction(1) then
-        FaceObject("target")
-        Debug(8092,"STARTING wand")
-        return cast(5019,"target")
-      end
+    if wowex.wowexStorage.read("useWand") then
+      if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") and instanceType ~= "party" and not mounted() then
+        if UnitHealth("target") <= 5 and not IsAutoRepeatAction(1) then
+          FaceObject("target")
+          Debug(8092,"STARTING wand")
+          return cast(5019,"target")
+        end
 
-      if (cooldown(MindBlast) >= 1.6 or health("target") <= 10) and (debuff(ShadowWordPain,"target") or health("target") <= 20) and not IsAutoRepeatAction(1) and not isCasting("player") and distance("player","target") <= 30 and not moving() and not UnitIsPlayer("target") then
-        FaceObject("target")
-        Debug(8092,"STARTING wand")
-        return cast(5019,"target")
-        --return Eval('RunMacroText("/cast !Shoot")', 'player')
-      elseif ((UnitPower("player") <= manacost(MindBlast)) and (UnitPower("player") <= manacost(ShadowWordPain))) and ((health() >= 60) or ((UnitPower("player") <= manacost(PowerWordShield)) and (UnitPower("player") <= manacost(Renew)) and (UnitPower("player") <= manacost(FlashHeal)))) and not IsAutoRepeatAction(1) and not isCasting("player") and distance("player","target") <= 30 and not moving() then
-        Debug(8092,"NOTHING TO DO, STARTING wand") 
-        return cast(5019,"target")     
-        --return Eval('RunMacroText("/cast !Shoot")', 'player')
+        if (cooldown(MindBlast) >= 1.6 or health("target") <= 10) and (debuff(ShadowWordPain,"target") or health("target") <= 20) and not IsAutoRepeatAction(1) and not isCasting("player") and distance("player","target") <= 30 and not moving() and not UnitIsPlayer("target") then
+          FaceObject("target")
+          Debug(8092,"STARTING wand")
+          return cast(5019,"target")
+          --return Eval('RunMacroText("/cast !Shoot")', 'player')
+        elseif ((UnitPower("player") <= manacost(MindBlast)) and (UnitPower("player") <= manacost(ShadowWordPain))) and ((health() >= 60) or ((UnitPower("player") <= manacost(PowerWordShield)) and (UnitPower("player") <= manacost(Renew)) and (UnitPower("player") <= manacost(FlashHeal)))) and not IsAutoRepeatAction(1) and not isCasting("player") and distance("player","target") <= 30 and not moving() then
+          Debug(8092,"NOTHING TO DO, STARTING wand") 
+          return cast(5019,"target")     
+          --return Eval('RunMacroText("/cast !Shoot")', 'player')
+        end
       end
     end
   end
@@ -1133,6 +1178,16 @@ local button_example = {
     parent = "useDefensiveDispel",
     sety = "TOPRIGHT"
   },
+  {
+    key = "useWand",
+    buttonname = "useWand",
+    texture = "ability_shootwand",
+    tooltip = "Use Wand on Monsters",
+    text = "Use Wand on Monsters",
+    setx = "TOP",
+    parent = "useOffensiveDispel",
+    sety = "TOPRIGHT"
+  },  
 }
 wowex.button_factory(button_example)
 
@@ -1154,6 +1209,8 @@ local mytable = {
         { key = "importantoffdispel",  type = "checkbox", text = "Only Dispel Important Buffs", desc = "" },
         { key = "importantdefdispel",  type = "checkbox", text = "Only Dispel Important Debuffs", desc = "" },
         { key = "heading", type = "heading", color = 'FF7C0A', text = "DoTs" },
+        { key = "multidot",  type = "checkbox", text = "DoT all Players Targeting Player", desc = "" },
+        { key = "multidotunits",  type = "checkbox", text = "DoT all Monsters Targeting Player", desc = "" },
         { key = "dotallplayers",  type = "checkbox", text = "DoT all Nearby Players", desc = "" },
       }
     },
