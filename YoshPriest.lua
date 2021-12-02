@@ -525,7 +525,7 @@ Routine:RegisterRoutine(function()
       end
       if event == "PLAYER_TARGET_CHANGED" and UnitAffectingCombat("player") then 
         for hunter in OM:Objects(OM.Types.Player) do
-          if distance("player",hunter) <= 10 then
+          if distance("player",hunter) <= 30 then
             if UnitClass(hunter) == "Hunter" then
               if UnitCanAttack("player",hunter) then
                 if buff(5384,hunter) then
@@ -628,7 +628,7 @@ Routine:RegisterRoutine(function()
   end 
 
   local function Opener()
-    if UnitCanAttack("player","target") and distance("player","target") <= 34 and not UnitIsDeadOrGhost("target") then
+    if UnitCanAttack("player","target") and distance("player","target") <= 36 and not UnitIsDeadOrGhost("target") then
       --if castable(VampiricEmbrace,"target") and not debuff(VampiricEmbrace,"target") --[[and (health() <= 95 or UnitIsPlayer("target"))]] and UnitIsPlayer("target") then
       --  return cast(VampiricEmbrace,"target")
       --end
@@ -784,6 +784,27 @@ Routine:RegisterRoutine(function()
           end
         end
       end
+      if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() then -- if not in combat, heal everyone
+        for object in OM:Objects(OM.Types) do
+          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not isCasting("player") and (UnitInParty(object) or Object("player") == object) then -- if friendly player in range
+            if UnitIsDeadOrGhost(object) and not UnitAffectingCombat("player") then
+              return cast(Resurrection,object)
+            end
+            if castable(Renew,object) and not buff(Renew,object) and health(object) <= 70 and not UnitIsDeadOrGhost(object) then
+              return cast(Renew,object)
+            end
+            if castable(Heal,object) and health() <= 30 and not moving() and not UnitIsDeadOrGhost(object) then
+              return cast(Heal,object)
+            end
+            if castable(LesserHeal,object) and health() <= 60 and not moving() and not UnitIsDeadOrGhost(object) then
+              return cast(LesserHeal,object)
+            end
+            if isDiseased(object) and castable(AbolishDisease,object) and not UnitIsDeadOrGhost(object) then
+              return cast(AbolishDisease,object)
+            end
+          end
+        end
+      end
     elseif not wowex.wowexStorage.read("CombatHeals") then
       -- in combat
       if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 and not mounted() then -- in combat
@@ -825,7 +846,7 @@ Routine:RegisterRoutine(function()
 
   local function Dps()
     if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") then
-      if (cooldown(MindBlast) <= wowex.wowexStorage.read("wandspeed") and IsAutoRepeatAction(1) and health("target") >= 60 and not debuff(DevouringPlague,"target")) and (UnitPower("player") >= manacost(MindBlast)) then
+      if (((cooldown(MindBlast) <= wowex.wowexStorage.read("wandspeed") and health("target") >= 60) or (not debuff(ShadowWordPain,"target") and health("target") >= 20)) and IsAutoRepeatAction(1) and not debuff(DevouringPlague,"target")) and (UnitPower("player") >= manacost(MindBlast)) then
         Debug(8092,"Stopping wand to mind blast")
         Eval('RunMacroText("/stopcasting")', 'player')
       end
@@ -1038,7 +1059,7 @@ Routine:RegisterRoutine(function()
   end
 
   local function PreCombat()
-    if UnitExists("target") and not IsEatingOrDrinking("player") and distance("player","target") <= 45 and not mounted() and not UnitIsDeadOrGhost("target") and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
+    if UnitExists("target") and not IsEatingOrDrinking("player") and distance("player","target") <= 60 and not mounted() and not UnitIsDeadOrGhost("target") and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
       if not buff(Shadowform,"player") then -- Shadowform
         return cast(Shadowform,"player")
       end      
