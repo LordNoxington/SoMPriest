@@ -1021,19 +1021,21 @@ Routine:RegisterRoutine(function()
 
   local function OffensiveDispel()
     if wowex.wowexStorage.read("useOffensiveDispel") then
-      if wowex.wowexStorage.read('importantoffdispel') then
-        if isMagicBuff("target") and castable(DispelMagic,"target") and UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not UnitIsDeadOrGhost("target") and not mounted() then
-          for i=1,40 do
-            local name = UnitBuff("target",i)
-            if name == "Arcane Power" or name == "Innervate" or name == "Ghost Wolf" or name == "Sacrifice" or name == "Fear Ward" or name == "Power Word: Fortitude" or name == "Power Word: Shield" or name == "Blessing of Freedom" or name == "Blessing of Protection" or name == "Blessing of Sacrifice" or name == "Regrowth" or name == "Cone of Cold" or name == "Shadow Ward" or name == "Mana Shield" or name == "Presence of Mind" or name == "Ice Barrier" or name == "Nature's Swiftness" or name == "Dampen Magic" then
-              Eval('RunMacroText("/stopcasting")', 'player')
-              return cast(DispelMagic,"target")
-            else break end
+      for object in OM:Objects(OM.Types.Player) do
+        if wowex.wowexStorage.read('importantoffdispel') then
+          if isMagicBuff(object) and castable(DispelMagic,object) and UnitTargetingUnit(object,"player") and UnitCanAttack("player",object) and UnitAffectingCombat("player") and not UnitIsDeadOrGhost(object) and not mounted() then
+            for i=1,40 do
+              local name = UnitBuff(object,i)
+              if name == "Arcane Power" or name == "Innervate" or name == "Ghost Wolf" or name == "Sacrifice" or name == "Fear Ward" or name == "Power Word: Fortitude" or name == "Power Word: Shield" or name == "Blessing of Freedom" or name == "Blessing of Protection" or name == "Blessing of Sacrifice" or name == "Regrowth" or name == "Cone of Cold" or name == "Shadow Ward" or name == "Mana Shield" or name == "Presence of Mind" or name == "Ice Barrier" or name == "Nature's Swiftness" or name == "Dampen Magic" then
+                Eval('RunMacroText("/stopcasting")', 'player')
+                return cast(DispelMagic,object)
+              else break end
+            end
           end
-        end
-      elseif not wowex.wowexStorage.read('importantoffdispel') then
-        if isMagicBuff("target") and castable(DispelMagic,"target") and UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not UnitIsDeadOrGhost("target") and not mounted() then
-          return cast(DispelMagic,"target")
+        elseif not wowex.wowexStorage.read('importantoffdispel') then
+          if isMagicBuff(object) and castable(DispelMagic,object) and UnitTargetingUnit(object,"player") and UnitCanAttack("player",object) and UnitAffectingCombat("player") and not UnitIsDeadOrGhost(object) and not mounted() then
+            return cast(DispelMagic,object)
+          end
         end
       end
     end
