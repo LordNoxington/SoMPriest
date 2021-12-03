@@ -1,3 +1,5 @@
+-- add fade in dungons
+
 
 local Tinkr = ...
 local wowex = {}
@@ -465,7 +467,7 @@ Routine:RegisterRoutine(function()
       local myname = UnitName("player")
       if spellName == "Nature's Swiftness" then
         for object in OM:Objects(OM.Types.Player) do
-          if castable(Silence,object) and distance(object,"player") <= 20 then
+          if castable(Silence,object) and distance(object,"player") <= 20 and not debuff(Silence,"target") then
             Eval('RunMacroText("/stopcasting")', 'player')
             return cast(Silence,object)
           end
@@ -543,7 +545,7 @@ Routine:RegisterRoutine(function()
   end
 
   local function Loot()
-    if wowex.wowexStorage.read('autoloot') and not UnitAffectingCombat("player") then
+    if wowex.wowexStorage.read('autoloot') and not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") then
       for i, object in ipairs(Objects()) do
         if ObjectLootable(object) and ObjectDistance("player",object) < 5 and ObjectType(object) == 3 then
           ObjectInteract(object)
@@ -700,8 +702,18 @@ Routine:RegisterRoutine(function()
           return cast(PsychicScream,"target")
         end
       end
-      if castable(Silence,"target") and not debuff(PsychicScream,"target") and targetclass == "Warlock" or targetclass == "Priest" or targetclass == "Paladin" or targetclass == "Mage" or targetclass == "Druid" or targetclass == "Shaman" or (targetclass == "Hunter" and distance("player","target") <= 7) then
+      if castable(Silence,"target") and not debuff(Silence,"target") and not debuff(PsychicScream,"target") and targetclass == "Warlock" or targetclass == "Priest" or targetclass == "Paladin" or targetclass == "Mage" or targetclass == "Druid" or targetclass == "Shaman" or (targetclass == "Hunter" and distance("player","target") <= 7) then
         return cast(Silence,"target")
+      end
+      if castable(Fade,"player") and (instanceType == "party" or instanceType == "raid") then
+        for object in OM:Objects(OM.Types.Units) do
+          if UnitCanAttack("player",object) and UnitCreatureType(object) ~= "Critter" and not UnitIsPlayer(object) and not UnitIsDeadOrGhost(object) then
+            local isTanking, status, threatpct, rawthreatpct, threatvalue = UnitDetailedThreatSituation("player", object)
+            if isTanking then
+              cast(Fade,"player")
+            end
+          end
+        end
       end
     end
   end
@@ -857,7 +869,10 @@ Routine:RegisterRoutine(function()
       if castable(Shadowform,"player") and not buff(Shadowform,"player") then -- Shadowform
         return cast(Shadowform,"player")
       end
-      if castable(VampiricEmbrace,"target") and not debuff(VampiricEmbrace,"target") and (health() <= 98 or UnitIsPlayer("target")) and not IsAutoRepeatAction(1) and health("target") >= 50 and UnitTargetingUnit("target","player") then
+      if castable(ShadowWordPain,"target") and not debuff(ShadowWordPain,"target") and health("target") >= 10 and not IsAutoRepeatAction(1) then   
+        return cast(ShadowWordPain,"target")
+      end
+      if castable(VampiricEmbrace,"target") and not debuff(VampiricEmbrace,"target") and (health() <= 98 or UnitIsPlayer("target") or moving() or UnitInParty("player")) and not IsAutoRepeatAction(1) and health("target") >= 50 and (UnitTargetingUnit("target","player") or UnitInParty("player")) and ((UnitPower("player") >= manacost(MindBlast)) or (UnitPower("player") >= manacost(ShadowWordPain)) or (UnitPower("player") >= manacost(MindFlay))) then
         return cast(VampiricEmbrace,"target")
       end
       if castable(MindBlast,"target") and not moving() and not IsAutoRepeatAction(1) and ((not debuff(ShadowWordPain,"target") or health("target") >= 10) or UnitIsPlayer("target")) then
@@ -865,9 +880,6 @@ Routine:RegisterRoutine(function()
       end
       if castable(DevouringPlague,"target") and not debuff(DevouringPlague,"target") and UnitIsPlayer("target") and not IsAutoRepeatAction(1) and not immune("target", DevouringPlague) and health("target") >= 50 and targetclass ~= "priest" then      
         return cast(DevouringPlague,"target")
-      end
-      if castable(ShadowWordPain,"target") and not debuff(ShadowWordPain,"target") and health("target") >= 10 and not IsAutoRepeatAction(1) then   
-        return cast(ShadowWordPain,"target")
       end
       --if castable(ManaBurn,"target") and not moving() and UnitIsPlayer("target") and not isCasting("target") and (targetclass == "Priest" or targetclass == "Mage") and targetmana >= 10 then
       --  return cast(ManaBurn,"target")
@@ -881,7 +893,7 @@ Routine:RegisterRoutine(function()
   local function Buff()
     if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() then
       for object in OM:Objects(OM.Types.Players) do
-        if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and mana >= 70 and UnitInParty(object) then -- if friendly player in range
+        if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and UnitInParty(object) then -- if friendly player in range
           if castable(PowerWordFortitude,object) and not buff(PowerWordFortitude,object) then
             return cast(PowerWordFortitude,object)
           end
@@ -1061,7 +1073,7 @@ Routine:RegisterRoutine(function()
   end
 
   local function PreCombat()
-    if UnitExists("target") and not IsEatingOrDrinking("player") and distance("player","target") <= 60 and not mounted() and not UnitIsDeadOrGhost("target") and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
+    if UnitExists("target") and instanceType ~= "party" and not IsEatingOrDrinking("player") and distance("player","target") <= 60 and not mounted() and not UnitIsDeadOrGhost("target") and not UnitAffectingCombat("player") and UnitCanAttack("player","target") and not melee() and not (buff(301089,"target") or buff(301091,"target") or buff(34976,"target")) then
       if not buff(Shadowform,"player") then -- Shadowform
         return cast(Shadowform,"player")
       end      
@@ -1076,14 +1088,14 @@ Routine:RegisterRoutine(function()
 
   local function wand()
     if wowex.wowexStorage.read("useWand") then
-      if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") and instanceType ~= "party" and not mounted() then
+      if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") and not mounted() then
         if UnitHealth("target") <= 5 and not IsAutoRepeatAction(1) then
           FaceObject("target")
           Debug(8092,"STARTING wand")
           return cast(5019,"target")
         end
 
-        if (cooldown(MindBlast) >= wowex.wowexStorage.read("wandspeed") or health("target") <= 10) and (debuff(ShadowWordPain,"target") or health("target") <= 20) and not IsAutoRepeatAction(1) and not isCasting("player") and distance("player","target") <= 30 and not moving() and not UnitIsPlayer("target") then
+        if (cooldown(MindBlast) >= wowex.wowexStorage.read("wandspeed") or health("target") <= 10) and (debuff(ShadowWordPain,"target") or health("target") <= 20) and (debuff(VampiricEmbrace,"target") or health() > 98) and not IsAutoRepeatAction(1) and not isCasting("player") and distance("player","target") <= 30 and not moving() and not UnitIsPlayer("target") then
           FaceObject("target")
           Debug(8092,"STARTING wand")
           return cast(5019,"target")
@@ -1094,6 +1106,10 @@ Routine:RegisterRoutine(function()
           --return Eval('RunMacroText("/cast !Shoot")', 'player')
         end
       end
+    elseif ((UnitPower("player") <= manacost(MindBlast)) and (UnitPower("player") <= manacost(ShadowWordPain))) and ((health() >= 60) or ((UnitPower("player") <= manacost(PowerWordShield)) and (UnitPower("player") <= manacost(Renew)) and (UnitPower("player") <= manacost(FlashHeal)))) and not IsAutoRepeatAction(1) and not isCasting("player") and distance("player","target") <= 30 and not moving() then
+      Debug(8092,"NOTHING TO DO, STARTING wand") 
+      return cast(5019,"target")     
+      --return Eval('RunMacroText("/cast !Shoot")', 'player')
     end
   end
 
