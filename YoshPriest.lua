@@ -629,7 +629,7 @@ Routine:RegisterRoutine(function()
 
   local function Opener()
     if UnitCanAttack("player","target") and distance("player","target") <= 36 and not UnitIsDeadOrGhost("target") then
-      if castable(MindBlast,"target") and not moving() and cansee("player","target") and not targetclass == "Rogue" then
+      if castable(MindBlast,"target") and not moving() and cansee("player","target") and not IsStealthed("target") then
         return cast(MindBlast,"target")
       end
       if castable(ShadowWordPain,"target") and moving() and UnitIsPlayer("target") then
@@ -829,7 +829,7 @@ Routine:RegisterRoutine(function()
       -- out of combat
       if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() and instanceType ~= "pvp" then -- if not in combat, heal everyone
         for object in OM:Objects(OM.Types) do
-          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not isCasting("player") and (UnitInParty(object) or Object("player") == object) then -- if friendly player in range
+          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not isCasting("player") and (--[[UnitInParty(object) or]] Object("player") == object) then -- if friendly player in range
             if UnitIsDeadOrGhost(object) and not UnitAffectingCombat("player") then
               return cast(Resurrection,object)
             end
@@ -912,9 +912,9 @@ Routine:RegisterRoutine(function()
       if castable(2652,"player") and not buff(2652,"player") then -- touch of weakness Rank 1
         return cast(2652,"player")
       end
-      if castable(PowerWordShield,"player") and instanceType == "pvp" and not buff(PowerWordShield,"player") and not debuff(6788,"player") then
-        return cast(PowerWordShield,"player")
-      end
+      --if castable(PowerWordShield,"player") and instanceType == "pvp" and not buff(PowerWordShield,"player") and not debuff(6788,"player") then
+      --  return cast(PowerWordShield,"player")
+      --end
     end
   end
     
@@ -1074,7 +1074,7 @@ Routine:RegisterRoutine(function()
       if not buff(Shadowform,"player") then -- Shadowform
         return cast(Shadowform,"player")
       end      
-      if castable(PowerWordShield,"player") and not debuff(6788,"player") and not buff(PowerWordShield,"player") then
+      if castable(PowerWordShield,"player") and not debuff(6788,"player") and not buff(PowerWordShield,"player") and not IsStealthed("target") then
         return cast(PowerWordShield,"player")
       end
       if castable(2652,"player") and not buff(2652,"player") then -- touch of weakness Rank 1
@@ -1132,8 +1132,8 @@ Routine:RegisterRoutine(function()
       if Cooldowns() then return true end     
       if Healing() then return true end
       if Dps() then return true end
-      --if Interrupt() then return true end
-      --if Dot() then return true end
+      if Interrupt() then return true end
+      if Dot() then return true end
       if pvp() then return true end
       if OffensiveDispel() then return true end
       if DefensiveDispel() then return true end
