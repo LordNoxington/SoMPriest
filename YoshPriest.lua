@@ -466,7 +466,7 @@ Routine:RegisterRoutine(function()
       if spellName == "Nature's Swiftness" then
         for object in OM:Objects(OM.Types.Player) do
           if castable(Silence,object) and distance(object,"player") <= 20 and not debuff(15487,"target") then
-            --Eval('RunMacroText("/stopcasting")', 'player')
+            Eval('RunMacroText("/stopcasting")', 'player')
             return cast(Silence,object)
           end
         end
@@ -815,6 +815,18 @@ Routine:RegisterRoutine(function()
     elseif not wowex.wowexStorage.read("CombatHeals") then
       -- in combat
       if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 and not mounted() then -- in combat
+        if health() <= 70 and cooldown(ShadowWordPain) > 2 then -- if spell locked on shadow
+          if castable(FlashHeal,"player") and not moving() then
+            return cast(FlashHeal,"player")
+          end
+          if castable(Renew,"player") and not buff(Renew,"player") and moving() then
+            return cast(Renew,"player")
+          end
+        elseif health() >= 70 and cooldown(ShadowWordPain) > 2 then
+          if castable(Smite,"target") then
+            return cast(Smite,"target")
+          end
+        end
         for object in OM:Objects(OM.Types) do
           if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) and UnitInParty(object) then -- if friendly party player in range
             if castable(PowerWordShield,object) and not debuff(6788,object) and not buff(PowerWordShield,object) and health(object) <= 15 then
@@ -822,12 +834,12 @@ Routine:RegisterRoutine(function()
             end
           end
         end
-        if castable(PowerWordShield,"player") and not debuff(6788,"player") and not buff(PowerWordShield,"player") and health("player") <= 90 and not IsAutoRepeatAction(1) and UnitTargetingUnit("target","player") then
+        if castable(PowerWordShield,"player") and not debuff(6788,"player") and not buff(PowerWordShield,"player") and health("player") <= 98 and not IsAutoRepeatAction(1) and UnitTargetingUnit("target","player") then
           return cast(PowerWordShield,"player")
         end
       end
       -- out of combat
-      if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() and instanceType ~= "pvp" then -- if not in combat, heal everyone
+      if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() then -- if not in combat, heal everyone
         for object in OM:Objects(OM.Types) do
           if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not isCasting("player") and (--[[UnitInParty(object) or]] Object("player") == object) then -- if friendly player in range
             if UnitIsDeadOrGhost(object) and not UnitAffectingCombat("player") then
@@ -867,10 +879,10 @@ Routine:RegisterRoutine(function()
       if castable(ShadowWordPain,"target") and not debuff(ShadowWordPain,"target") and health("target") >= 10 and not IsAutoRepeatAction(1) then   
         return cast(ShadowWordPain,"target")
       end
-      if castable(VampiricEmbrace,"target") and not debuff(VampiricEmbrace,"target") and (health() <= 98 or UnitIsPlayer("target") or moving() or instanceType == "party") and not IsAutoRepeatAction(1) and health("target") >= 50 and (UnitTargetingUnit("target","player") or instanceType == "party") and ((UnitPower("player") >= manacost(MindBlast) and not moving()) or (UnitPower("player") >= manacost(ShadowWordPain)) or (UnitPower("player") >= manacost(MindFlay) and not moving())) then
+      if castable(VampiricEmbrace,"target") and not debuff(VampiricEmbrace,"target") and (health() <= 98 or moving() or instanceType == "party") and not IsAutoRepeatAction(1) and health("target") >= 50 and (UnitTargetingUnit("target","player") or instanceType == "party") and ((UnitPower("player") >= manacost(MindBlast) and not moving()) or (UnitPower("player") >= manacost(ShadowWordPain)) or (UnitPower("player") >= manacost(MindFlay) and not moving())) then
         return cast(VampiricEmbrace,"target")
       end
-      if castable(MindBlast,"target") and not moving() and not IsAutoRepeatAction(1) and ((not debuff(ShadowWordPain,"target") or health("target") >= 10) or  UnitIsPlayer("target")) then
+      if castable(MindBlast,"target") and not moving() and not IsAutoRepeatAction(1) and ((not debuff(ShadowWordPain,"target") or health("target") >= 10) or (UnitIsPlayer("target") and not melee())) then
         return cast(MindBlast,"target")
       end
       if castable(DevouringPlague,"target") and not debuff(DevouringPlague,"target") and UnitIsPlayer("target") and not IsAutoRepeatAction(1) and health("target") >= 50 and targetclass ~= "Priest" then      
@@ -940,7 +952,7 @@ Routine:RegisterRoutine(function()
       end
     end
 
-    if (not castable(7744,"player") and debuff(5782,"player") or debuff(6213,"player") or debuff(6215,"player") or debuff(5484,"player") or debuff(17928,"player") or debuff(10888,"player") or debuff(6789,"player")) then
+    if (cooldown(7744) > 2 and debuff(5782,"player") or debuff(6213,"player") or debuff(6215,"player") or debuff(5484,"player") or debuff(17928,"player") or debuff(10888,"player") or debuff(6789,"player")) then
       return Eval('RunMacroText("/use Insignia of the Horde")', 'player')
     end
 
