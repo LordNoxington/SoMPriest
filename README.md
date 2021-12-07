@@ -1,6 +1,8 @@
 # SoMPriest
 A Shadow priest rotation primarily used for leveling and BGs. Also supports healing dungeons. I will be slowly adding more PvP logic, including engineering items, trinkets etc.
 
+PLEASE SET A WAND SPEED ON FIRST LOAD.
+
 To keep the rotation bar in a fixed location - Move the bar somewhere on the screen where you want it to stay. Turn the main Cromulon (left most button) off then back on.
 
 You can critique my code, as I am definitely still learning :)
