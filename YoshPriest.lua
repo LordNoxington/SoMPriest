@@ -410,6 +410,11 @@ Routine:RegisterRoutine(function()
     end
   end
 
+  local function SpellCooldown(spellID)
+  start, duration, enabled = GetSpellCooldown(spellID)
+    return duration
+  end
+
   local function isCasting(Unit)
     local name  = UnitCastingInfo(Unit);    
     if name then
@@ -630,6 +635,9 @@ Routine:RegisterRoutine(function()
   local function Opener()
     if UnitCanAttack("player","target") and distance("player","target") <= 36 and not UnitIsDeadOrGhost("target") then
       if castable(MindBlast,"target") and not moving() and cansee("player","target") and not IsStealthed("target") then
+        if instanceType ~= "pvp" and castable(InnerFocus,"player") then
+          Eval('RunMacroText("/cast Inner Focus")', 'player')
+        end
         return cast(MindBlast,"target")
       end
       if castable(ShadowWordPain,"target") and moving() and UnitIsPlayer("target") then
@@ -800,11 +808,11 @@ Routine:RegisterRoutine(function()
             if castable(Renew,object) and not buff(Renew,object) and health(object) <= 70 and not UnitIsDeadOrGhost(object) then
               return cast(Renew,object)
             end
-            if castable(Heal,object) and health() <= 30 and not moving() and not UnitIsDeadOrGhost(object) then
+            --if castable(Heal,object) and health() <= 30 and not moving() and not UnitIsDeadOrGhost(object) then
+            --  return cast(Heal,object)
+            --end
+            if castable(Heal,object) and health() <= 60 and not moving() and not UnitIsDeadOrGhost(object) then
               return cast(Heal,object)
-            end
-            if castable(LesserHeal,object) and health() <= 60 and not moving() and not UnitIsDeadOrGhost(object) then
-              return cast(LesserHeal,object)
             end
             if isDiseased(object) and castable(AbolishDisease,object) and not UnitIsDeadOrGhost(object) then
               return cast(AbolishDisease,object)
@@ -845,14 +853,14 @@ Routine:RegisterRoutine(function()
             if UnitIsDeadOrGhost(object) and not UnitAffectingCombat("player") then
               return cast(Resurrection,object)
             end
-            if castable(Renew,object) and not buff(Renew,object) and health(object) <= 70 and not UnitIsDeadOrGhost(object) then
+            if castable(Renew,object) and not buff(Renew,object) and health(object) <= 60 and not UnitIsDeadOrGhost(object) then
               return cast(Renew,object)
             end
-            if castable(Heal,object) and health() <= 30 and not moving() and not UnitIsDeadOrGhost(object) then
+            --if castable(Heal,object) and health() <= 30 and not moving() and not UnitIsDeadOrGhost(object) then
+            --  return cast(Heal,object)
+            --end
+            if castable(Heal,object) and health() <= 50 and not moving() and not UnitIsDeadOrGhost(object) then
               return cast(Heal,object)
-            end
-            if castable(LesserHeal,object) and health() <= 60 and not moving() and not UnitIsDeadOrGhost(object) then
-              return cast(LesserHeal,object)
             end
             if isDiseased(object) and castable(AbolishDisease,object) and not UnitIsDeadOrGhost(object) then
               return cast(AbolishDisease,object)
@@ -865,7 +873,7 @@ Routine:RegisterRoutine(function()
 
   local function Dps()
     if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") then
-      if (((cooldown(MindBlast) <= wowex.wowexStorage.read("wandspeed") and health("target") >= 60) or (not debuff(ShadowWordPain,"target") and health("target") >= 20)) and IsAutoRepeatAction(1) and not debuff(DevouringPlague,"target")) and (UnitPower("player") >= manacost(MindBlast)) then
+      if (((SpellCooldown(MindBlast) <= (wowex.wowexStorage.read("wandspeed") + 0.1) and (health("target") >= 60) or isElite("target")) or (not debuff(ShadowWordPain,"target") and (health("target") >= 20) or isElite("target"))) and IsAutoRepeatAction(1)) and (UnitPower("player") >= manacost(MindBlast)) then
         Debug(8092,"Stopping wand to mind blast")
         Eval('RunMacroText("/stopcasting")', 'player')
       end
@@ -879,13 +887,16 @@ Routine:RegisterRoutine(function()
       if castable(ShadowWordPain,"target") and not debuff(ShadowWordPain,"target") and health("target") >= 10 and not IsAutoRepeatAction(1) then   
         return cast(ShadowWordPain,"target")
       end
-      if castable(VampiricEmbrace,"target") and not debuff(VampiricEmbrace,"target") and (health() <= 98 or moving() or instanceType == "party") and not IsAutoRepeatAction(1) and health("target") >= 50 and (UnitTargetingUnit("target","player") or instanceType == "party") and ((UnitPower("player") >= manacost(MindBlast) and not moving()) or (UnitPower("player") >= manacost(ShadowWordPain)) or (UnitPower("player") >= manacost(MindFlay) and not moving())) then
+      if castable(VampiricEmbrace,"target") and not debuff(VampiricEmbrace,"target") and (health() <= 98 or moving() or instanceType == "party" or isElite("target")) and not IsAutoRepeatAction(1) and health("target") >= 50 and (UnitTargetingUnit("target","player") or instanceType == "party") and ((UnitPower("player") >= manacost(MindBlast) and not moving()) or (UnitPower("player") >= manacost(ShadowWordPain)) or (UnitPower("player") >= manacost(MindFlay) and not moving())) then
         return cast(VampiricEmbrace,"target")
       end
-      if castable(MindBlast,"target") and not moving() and not IsAutoRepeatAction(1) and ((not debuff(ShadowWordPain,"target") or health("target") >= 10) or (UnitIsPlayer("target") and not melee())) then
+      if castable(MindBlast,"target") and not moving() and not IsAutoRepeatAction(1) and ((not debuff(ShadowWordPain,"target") or health("target") >= 10) or (UnitIsPlayer("target") and (not melee() or buff(14743,"player")))) then
         return cast(MindBlast,"target")
       end
-      if castable(DevouringPlague,"target") and not debuff(DevouringPlague,"target") and UnitIsPlayer("target") and not IsAutoRepeatAction(1) and health("target") >= 50 and targetclass ~= "Priest" then      
+      if castable(DevouringPlague,"target") and not debuff(DevouringPlague,"target") and (UnitIsPlayer("target") or health() <= 80 or isElite("target")) and not IsAutoRepeatAction(1) and health("target") >= 50 and targetclass ~= "Priest" then      
+        if castable(InnerFocus,"player") then
+          Eval('RunMacroText("/cast Inner Focus")', 'player')
+        end
         return cast(DevouringPlague,"target")
       end
       --if castable(ManaBurn,"target") and not moving() and UnitIsPlayer("target") and not isCasting("target") and (targetclass == "Priest" or targetclass == "Mage") and targetmana >= 10 then
@@ -921,7 +932,7 @@ Routine:RegisterRoutine(function()
       if castable(InnerFire,"player") and not buff(InnerFire,"player") then
         return cast(InnerFire,"player")
       end
-      if castable(2652,"player") and not buff(2652,"player") then -- touch of weakness Rank 1
+      if castable(2652,"player") and not buff(2652,"player") and (instanceType == "pvp" or (UnitExists("target") and UnitIsPlayer("target"))) then -- touch of weakness Rank 1
         return cast(2652,"player")
       end
       --if castable(PowerWordShield,"player") and instanceType == "pvp" and not buff(PowerWordShield,"player") and not debuff(6788,"player") then
@@ -992,7 +1003,7 @@ Routine:RegisterRoutine(function()
   local function DefensiveDispel()
     if wowex.wowexStorage.read("useDefensiveDispel") then
       if wowex.wowexStorage.read('importantdefdispel') then
-        if not IsEatingOrDrinking("player") and health("target") >= 10 and not mounted() then
+        if not IsEatingOrDrinking("player") and not mounted() then
           if isMagic("player") and castable(DispelMagic,"player") then
             for i=1,40 do
             local name = UnitDebuff("player",i)
@@ -1003,7 +1014,7 @@ Routine:RegisterRoutine(function()
           end
         end
       elseif not wowex.wowexStorage.read('importantdefdispel') then
-        if not IsEatingOrDrinking("player") and health("target") >= 10 and not mounted() then
+        if not IsEatingOrDrinking("player") and not mounted() then
           if isMagic("player") and castable(DispelMagic,"player") then
             return cast(DispelMagic,"player")
           end
@@ -1017,7 +1028,7 @@ Routine:RegisterRoutine(function()
       if wowex.wowexStorage.read("friendlydispel") then
         if wowex.wowexStorage.read('importantdefdispel') then
           for object in OM:Objects(OM.Types.Player) do
-            if not UnitCanAttack("player",object) and not IsEatingOrDrinking("player") and health("target") >= 10 and not UnitIsDeadOrGhost(object) and not mounted() then
+            if not UnitCanAttack("player",object) and not IsEatingOrDrinking("player") and not UnitIsDeadOrGhost(object) and not mounted() then
               if isMagic(object) and castable(DispelMagic,object) then
                 for i=1,40 do
                 local name = UnitDebuff(object,i)
@@ -1030,7 +1041,7 @@ Routine:RegisterRoutine(function()
           end
         elseif not wowex.wowexStorage.read('importantdefdispel') then
           for object in OM:Objects(OM.Types.Player) do
-            if not UnitCanAttack("player",object) and not IsEatingOrDrinking("player") and health("target") >= 10 and not UnitIsDeadOrGhost(object) and not mounted() then
+            if not UnitCanAttack("player",object) and not IsEatingOrDrinking("player") and not UnitIsDeadOrGhost(object) and not mounted() then
               if isMagic(object) and castable(DispelMagic,object) then
                 return cast(DispelMagic,object)
               end
@@ -1104,7 +1115,7 @@ Routine:RegisterRoutine(function()
           return cast(5019,"target")
         end
 
-        if (cooldown(MindBlast) >= wowex.wowexStorage.read("wandspeed") or health("target") <= 10) and (debuff(ShadowWordPain,"target") or health("target") <= 20) and (debuff(VampiricEmbrace,"target") or health() > 98) and not IsAutoRepeatAction(1) and not isCasting("player") and distance("player","target") <= 30 and not moving() and not UnitIsPlayer("target") then
+        if (SpellCooldown(MindBlast) >= (wowex.wowexStorage.read("wandspeed") + 0.1) or health("target") <= 10) and (debuff(ShadowWordPain,"target") or health("target") <= 20) and (debuff(VampiricEmbrace,"target") or health() > 98) and not IsAutoRepeatAction(1) and not isCasting("player") and distance("player","target") <= 30 and not moving() and not UnitIsPlayer("target") then
           FaceObject("target")
           Debug(8092,"STARTING wand")
           return cast(5019,"target")
@@ -1143,8 +1154,8 @@ Routine:RegisterRoutine(function()
       if Queue() then return true end
       if Cooldowns() then return true end     
       if Healing() then return true end
-      if Dps() then return true end
       if Interrupt() then return true end
+      if Dps() then return true end
       if Dot() then return true end
       if pvp() then return true end
       if OffensiveDispel() then return true end
