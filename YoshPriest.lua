@@ -495,7 +495,7 @@ Routine:RegisterRoutine(function()
             if sourceName == ObjectName(object) then
               if UnitCanAttack("player",object) then
                 if distance("player",object) > 8 then
-                  if castable(Silence,object) and cooldown(Silence) == 0 and distance("player",object) <= 25 and not UnitTargetingUnit("player",object) and not debuff(15487,"target") then
+                  if castable(Silence,object) and SpellCooldown(Silence) == 0 and distance("player",object) <= 25 and not UnitTargetingUnit("player",object) and not debuff(15487,"target") then
                     if not isProtected(object) then
                       silencetarget = Object(object)
                       FaceObject(object)
@@ -823,14 +823,14 @@ Routine:RegisterRoutine(function()
     elseif not wowex.wowexStorage.read("CombatHeals") then
       -- in combat
       if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and health("target") >= 10 and not mounted() then -- in combat
-        if health() <= 70 and cooldown(ShadowWordPain) > 2 then -- if spell locked on shadow
+        if health() <= 70 and SpellCooldown(ShadowWordPain) > 2 then -- if spell locked on shadow
           if castable(FlashHeal,"player") and not moving() then
             return cast(FlashHeal,"player")
           end
           if castable(Renew,"player") and not buff(Renew,"player") and moving() then
             return cast(Renew,"player")
           end
-        elseif health() >= 70 and cooldown(ShadowWordPain) > 2 then
+        elseif health() >= 70 and SpellCooldown(ShadowWordPain) > 2 then
           if castable(Smite,"target") then
             return cast(Smite,"target")
           end
@@ -873,14 +873,10 @@ Routine:RegisterRoutine(function()
 
   local function Dps()
     if UnitAffectingCombat("player") and UnitCanAttack("player","target") and not UnitIsDeadOrGhost("target") then
-      if (((SpellCooldown(MindBlast) <= (wowex.wowexStorage.read("wandspeed") + 0.1) and (health("target") >= 60) or isElite("target")) or (not debuff(ShadowWordPain,"target") and (health("target") >= 20) or isElite("target"))) and IsAutoRepeatAction(1)) and (UnitPower("player") >= manacost(MindBlast)) then
+      if (((SpellCooldown(MindBlast) <= wowex.wowexStorage.read("wandspeed") and (health("target") >= 60 or isElite("target"))) or (not debuff(ShadowWordPain,"target") and (health("target") >= 20 or isElite("target")))) and IsAutoRepeatAction(1)) and (UnitPower("player") >= manacost(MindBlast)) then
         Debug(8092,"Stopping wand to mind blast")
         Eval('RunMacroText("/stopcasting")', 'player')
       end
-      --if (castable(ShadowWordPain,"target") and IsAutoRepeatAction(1) and health("target") >= 50 and not debuff(DevouringPlague,"target")) and not debuff(ShadowWordPain,"target") and (UnitPower("player") >= manacost(ShadowWordPain)) then
-      --  Debug(8092,"Stopping wand to re-dot")
-      --  Eval('RunMacroText("/stopcasting")', 'player')
-      --end
       if castable(Shadowform,"player") and not buff(Shadowform,"player") then -- Shadowform
         return cast(Shadowform,"player")
       end
@@ -963,7 +959,7 @@ Routine:RegisterRoutine(function()
       end
     end
 
-    if (cooldown(7744) > 2 and debuff(5782,"player") or debuff(6213,"player") or debuff(6215,"player") or debuff(5484,"player") or debuff(17928,"player") or debuff(10888,"player") or debuff(6789,"player")) then
+    if (SpellCooldown(7744) > 2 and debuff(5782,"player") or debuff(6213,"player") or debuff(6215,"player") or debuff(5484,"player") or debuff(17928,"player") or debuff(10888,"player") or debuff(6789,"player")) then
       return Eval('RunMacroText("/use Insignia of the Horde")', 'player')
     end
 
