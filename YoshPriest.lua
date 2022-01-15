@@ -245,7 +245,7 @@ Routine:RegisterRoutine(function()
 
   --if gcd() > (latency()*5) then return end
 
-  if UnitIsDeadOrGhost("player") or isProtected("target") or isReflecting("target") then return end
+  if UnitIsDeadOrGhost("player") or isProtected("target") or isReflecting("target") or IsEatingOrDrinking("player") or UnitIsDeadOrGhost("target") then return end
   
   if wowex.wowexStorage.read("alwaysface") then
     if instanceType == "pvp" and UnitExists("target") and distance("player","target") <= 30 and cansee("player","target") then
@@ -437,7 +437,7 @@ Routine:RegisterRoutine(function()
   end
 
   local function isCasting(Unit)
-    local name  = UnitCastingInfo(Unit);    
+    local name = UnitCastingInfo(Unit);    
     if name then
       return true
     else return false
@@ -445,7 +445,7 @@ Routine:RegisterRoutine(function()
   end
 
   local function isChanneling(Unit)
-    local name  = UnitChannelInfo(Unit);    
+    local name = UnitChannelInfo(Unit);    
     if name then
       return true
     end
@@ -511,12 +511,12 @@ Routine:RegisterRoutine(function()
     if subevent == "SPELL_CAST_START" then
       local spellId, spellName, _, _, _, _, _, _, _, _, _, _, _ = select(12, ...)
       if spellName == "Fear" or spellName == "Polymorph" or spellName == "Regrowth" or spellName == "Cyclone" or spellName == "Greater Heal" or spellName == "Flash Heal" or spellname == "Healing Wave" or spellname == "Binding Heal" or spellName == "Mana Burn" or spellName == "Drain Mana" or spellName == "Holy Light" then
-        if health("target") <= 80 then
+        --if health("target") <= 80 then
           for object in OM:Objects(OM.Types.Player) do
             if sourceName == ObjectName(object) then
               if UnitCanAttack("player",object) then
                 if distance("player",object) > 8 then
-                  if castable(Silence,object) and SpellCooldown(Silence) == 0 and distance("player",object) <= 25 and not UnitTargetingUnit("player",object) and not debuff(15487,"target") then
+                  if castable(Silence) and SpellCooldown(Silence) == 0 and distance("player",object) <= 25 --[[and not UnitTargetingUnit("player",object)]] and not debuff(15487,"target") then
                     if not isProtected(object) then
                       silencetarget = Object(object)
                       FaceObject(object)
@@ -528,7 +528,7 @@ Routine:RegisterRoutine(function()
               end
             end
           end
-        end
+        --end
       end
       if spellName == "Entangling Roots" and destName == myname and instanceType ~= "arena" and wowex.wowexStorage.read("fap") then
         if GetItemCooldown(5634) == 0 and not buff(6615,"player") and not mounted() then
@@ -589,11 +589,11 @@ Routine:RegisterRoutine(function()
         if UnitCanAttack("player",object) then
           local kickclass, _, _ = UnitClass(object)
           if isCasting(object) and kickclass ~= "Hunter" then
-            if castable(Silence,object) and not UnitTargetingUnit("player",object) and not isProtected(object) and not debuff(15487,"target") then
+            if castable(Silence) and not UnitTargetingUnit("player",object) and not isProtected(object) and not debuff(15487,"target") then
               FaceObject(object)
               Debug("Silence off-target instantly ",38768)
               return cast(Silence,object)
-            elseif castable(Silence,object) and UnitTargetingUnit("player",object) and not isProtected(object) and not debuff(15487,"target") then
+            elseif castable(Silence) and UnitTargetingUnit("player",object) and not isProtected(object) and not debuff(15487,"target") then
               local _, _, _, _, endTime, _, _, _ = UnitCastingInfo(object);
               local finish = endTime/1000 - GetTime()
               if finish <= 0.5 and castable(Silence,object) then
@@ -614,11 +614,11 @@ Routine:RegisterRoutine(function()
         if UnitCanAttack("player",object) then
           local kickclass, _, _ = UnitClass(object)
           if isCasting(object) and kickclass ~= "Hunter" then
-            if castable(Silence,object) and not UnitTargetingUnit("player",object) and not isProtected(object) and not debuff(15487,"target") then
+            if castable(Silence) and not UnitTargetingUnit("player",object) and not isProtected(object) and not debuff(15487,"target") then
               FaceObject(object)
               Debug("Silence off-target instantly ",38768)              
               return cast(Silence,object)
-            elseif castable(Silence,object) and UnitTargetingUnit("player",object) and not isProtected(object) and not debuff(15487,"target") then
+            elseif castable(Silence) and UnitTargetingUnit("player",object) and not isProtected(object) and not debuff(15487,"target") then
               local _, _, _, _, endTime, _, _, _ = UnitCastingInfo(object);
               local finish = endTime/1000 - GetTime()
               if finish <= 0.5 and castable(Silence,object) then
@@ -627,10 +627,10 @@ Routine:RegisterRoutine(function()
                 return cast(Silence,object)
               end
             end  
-          elseif castable(Silence,object) and isChanneling(object) and kickclass ~= "Hunter" and not debuff(15487,"target") then
+          elseif castable(Silence) and isChanneling(object) and kickclass ~= "Hunter" and not debuff(15487,"target") then
             FaceObject(object)
             Debug("Silence " .. UnitName(object) .. " fast ",38768)
-            return cast(Silence,object)
+            return cast(Silence)
           end
         end
       end
@@ -707,19 +707,23 @@ Routine:RegisterRoutine(function()
 
   local function Cooldowns()
     if UnitExists("target") and UnitCanAttack("player","target") and UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() then
-      if castable(PsychicScream) and (enemiesAround("player", 8) >= 2 or (UnitIsPlayer("target") and health() <= 50 and distance("player","target") <= 8)) and instanceType ~= "party" and not debuff(Silence,"target") then
-        if IsAutoRepeatAction(1) then 
-          Debug(8092,"Stopping wand to scream")
-          Eval('RunMacroText("/stopcasting")', 'player')
-          return cast(PsychicScream,"target")
-        else
-          return cast(PsychicScream,"target")
+      if castable(PsychicScream) and (enemiesAround("player", 8) >= 2 or (UnitIsPlayer("target") and health() <= 50 and distance("player","target") <= 8)) and instanceType ~= "party" then
+        for object in OM:Objects(OM.Types.Player) do
+          if distance("player",object) <= 8 and not buff(18499,object) and not debuff(Silence,object) and not debuff(15269,object) then
+            if IsAutoRepeatAction(1) then 
+              Debug(8092,"Stopping wand to scream")
+              Eval('RunMacroText("/stopcasting")', 'player')
+              return cast(PsychicScream,"target")
+            else
+              return cast(PsychicScream,"target")
+            end
+          end
         end
       end
       if castable(Silence,"target") and not debuff(15487,"target") and health("target") <= 70 and not debuff(PsychicScream,"target") and (targetclass == "Warlock" or targetclass == "Priest" or targetclass == "Paladin" or targetclass == "Mage" or targetclass == "Druid" or targetclass == "Shaman" or (targetclass == "Hunter" and distance("player","target") <= 7)) then
         return cast(Silence,"target")
-        end
-      if castable(Fade,"player") and not buff(Fade,"player") and (instanceType == "party" or instanceType == "raid") then
+      end
+      if castable(Fade,"player") and not buff(Fade,"player") and (instanceType == "party" or instanceType == "raid" or instanceType == "pvp") then
         for object in OM:Objects(OM.Types.Units) do
           if UnitCanAttack("player",object) and UnitCreatureType(object) ~= "Critter" and not UnitIsPlayer(object) and not UnitIsDeadOrGhost(object) then
             local isTanking, status, threatpct, rawthreatpct, threatvalue = UnitDetailedThreatSituation("player", object)
@@ -787,9 +791,6 @@ Routine:RegisterRoutine(function()
                 Debug(8092,"Stopping wand to heal")
                 Eval('RunMacroText("/stopcasting")', 'player')
               end
-              --if health() <= 50 then
-              --  Eval('RunMacroText("/use Greater Healing Potion")', 'player')
-              --end
               if castable(PowerWordShield,object) and not debuff(6788,object) and not buff(PowerWordShield,object) and health(object) <= 90 and not IsAutoRepeatAction(1) and UnitTargetingUnit("target",object)  then
                 return cast(PowerWordShield,object)
               end
@@ -826,7 +827,7 @@ Routine:RegisterRoutine(function()
             --if castable(Heal,object) and health() <= 30 and not moving() and not UnitIsDeadOrGhost(object) then
             --  return cast(Heal,object)
             --end
-            if castable(Heal,object) and health() <= 60 and not moving() and not UnitIsDeadOrGhost(object) then
+            if castable(Heal,object) and health() <= 60 and not moving() and not isCasting("player") and not UnitIsDeadOrGhost(object) then
               return cast(Heal,object)
             end
             if wowex.wowexStorage.read("useabolish") then
@@ -840,17 +841,17 @@ Routine:RegisterRoutine(function()
     elseif wowex.wowexStorage.read("CombatHeals") == nil then
       -- in combat
       if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() then -- in combat
-        if health() <= 80 and SpellCooldown(ShadowWordPain) > 3.5 then -- if spell locked on shadow
-          if castable(FlashHeal,"player") and not moving() then
+        if health() <= 80 and SpellCooldown(ShadowWordPain) > 2 then -- if spell locked on shadow
+          if castable(FlashHeal,"player") and not moving() and not isCasting("player") then
             return cast(FlashHeal,"player")
           end
           if castable(Renew,"player") and not buff(Renew,"player") and moving() then
             return cast(Renew,"player")
           end
-        --elseif health() >= 80 and SpellCooldown(ShadowWordPain) > 3.5 then
-        --  if castable(Smite,"target") then
-        --    return cast(Smite,"target")
-        --  end
+        elseif health() >= 80 and SpellCooldown(ShadowWordPain) > 3 and enemiesAround("player", 10) < 2 and not isCasting("player") then
+          if castable(Smite,"target") then
+            return cast(Smite,"target")
+          end
         end
         for object in OM:Objects(OM.Types) do
           if not UnitCanAttack("player",object) and UnitIsPlayer(object) and UnitIsPlayer(object) and distance("player",object) <= 40 and not UnitIsDeadOrGhost(object) and UnitInParty(object) then -- if friendly party player in range
@@ -859,7 +860,7 @@ Routine:RegisterRoutine(function()
             end
           end
         end
-        if castable(PowerWordShield,"player") and (debuffduration(6788,"player") <= 1.5 or not debuff(6788,"player")) and not buff(PowerWordShield,"player") and instanceType ~= "party" and health("player") <= 98 and not IsAutoRepeatAction(1) and UnitTargetingUnit("target","player") then
+        if castable(PowerWordShield,"player") and UnitTargetingUnit("target","player") and (debuffduration(6788,"player") <= 1.5 or not debuff(6788,"player")) and not buff(PowerWordShield,"player") and instanceType ~= "party" and health("player") <= 98 and not IsAutoRepeatAction(1) then
           return cast(PowerWordShield,"player")
         end
       -- out of combat
@@ -869,22 +870,40 @@ Routine:RegisterRoutine(function()
             --if UnitIsDeadOrGhost(object) and not UnitAffectingCombat("player") then
             --  return cast(Resurrection,object)
             --end
-            if castable(Renew,person) and not buff(Renew,person) and health(person) <= 70 and not UnitIsDeadOrGhost(person) and instanceType ~= "party" then
+            if castable(Renew,person) and not buff(Renew,person) and health(person) <= 70 and not UnitIsDeadOrGhost(person) and instanceType ~= "party" and Object("player") == person then
               return cast(Renew,person)
             end
             --if castable(Heal,object) and health() <= 30 and not moving() and not UnitIsDeadOrGhost(object) then
             --  return cast(Heal,object)
             --end
-            if castable(Heal,person) and health() <= 60 and not moving() and not UnitIsDeadOrGhost(person) and instanceType ~= "party" then
+            if castable(Heal,person) and health() <= 60 and not moving() and not isCasting("player") and not UnitIsDeadOrGhost(person) and instanceType ~= "party" and Object("player") == person then
               return cast(Heal,person)
             end
             if wowex.wowexStorage.read("useabolish") then
               if isDiseased(person) and castable(AbolishDisease,person) and not UnitIsDeadOrGhost(person) then
-                return cast(AbolishDisease,person)
+                return cast(AbolishDisease,person) 
               end
             end
           end
         end
+      end
+    end
+  end
+
+  local function Consumables()
+    if UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() then -- in combat
+      if wowex.wowexStorage.read('majorhealth') then
+        if health() <= 50 and enemiesAround("player", 20) <= 2 then
+          Eval('RunMacroText("/use Major Healing Potion")', 'player')
+        end
+      end
+      if wowex.wowexStorage.read('majormana') then
+        if mana <= 50 then
+          Eval('RunMacroText("/use Major Mana Potion")', 'player')
+        end
+      end
+      if partyMembersAround("player", 30) >= 4 and enemiesAround("player", 30) >= 3 and cooldown(18607) == 0 then
+        Eval('RunMacroText("/use Horde Battle Standard")', 'player') 
       end
     end
   end
@@ -898,7 +917,7 @@ Routine:RegisterRoutine(function()
       if castable(Shadowform,"player") and not buff(Shadowform,"player") then -- Shadowform
         return cast(Shadowform,"player")
       end
-      if castable(ShadowWordPain,"target") and not debuff(ShadowWordPain,"target") and health("target") >= 10 and not IsAutoRepeatAction(1) and targetclass ~= "Paladin" then   
+      if castable(ShadowWordPain,"target") and not debuff(ShadowWordPain,"target") and health("target") >= 10 and not IsAutoRepeatAction(1) and targetclass ~= "Paladin" and targetclass ~= "Priest" then   
         return cast(ShadowWordPain,"target")
       end
       if castable(VampiricEmbrace,"target") and debuff(ShadowWordPain,"target") and not debuff(VampiricEmbrace,"target") and (health() <= 98 or moving() or ((instanceType == "party" or instanceType == "raid") and partyhealth("player", 30) < 80) or (isElite("target") and solo())) and not IsAutoRepeatAction(1) and (health("target") >= 50 or instanceType == "party") and (UnitTargetingUnit("target","player") or instanceType == "party") and ((UnitPower("player") >= (manacost(MindBlast) + manacost(VampiricEmbrace)) and not moving()) or (UnitPower("player") >= (manacost(ShadowWordPain) + manacost(VampiricEmbrace))) or (UnitPower("player") >= (manacost(MindFlay) + manacost(VampiricEmbrace)) and not moving())) then
@@ -907,7 +926,7 @@ Routine:RegisterRoutine(function()
       if castable(MindBlast,"target") and not moving() and not IsAutoRepeatAction(1) and ((not debuff(ShadowWordPain,"target") or health("target") >= 10) or (UnitIsPlayer("target") and (not melee() or buff(14743,"player") or buff(PowerWordShield,"player")))) then
         return cast(MindBlast,"target")
       end
-      if castable(DevouringPlague,"target") and not debuff(DevouringPlague,"target") and (((UnitIsPlayer("target") or health() <= 80 or isElite("target")) and (instanceType ~= "party" or instanceType ~= "raid")) or IsDungeonBoss("target")) and not IsAutoRepeatAction(1) and health("target") >= 60 and targetclass ~= "Priest" and targetclass ~= "Paladin" then      
+      if castable(DevouringPlague,"target") and not debuff(DevouringPlague,"target") and (((UnitIsPlayer("target") or health() <= 80 or isElite("target")) and (instanceType ~= "party" or instanceType ~= "raid")) or IsDungeonBoss("target")) and not IsAutoRepeatAction(1) and (health("target") >= 60 or enemiesAround("player",30) <= 2) and targetclass ~= "Priest" and targetclass ~= "Paladin" then      
         if castable(InnerFocus,"player") then
           Eval('RunMacroText("/cast Inner Focus")', 'player')
         end
@@ -916,6 +935,9 @@ Routine:RegisterRoutine(function()
       --if castable(ManaBurn,"target") and not moving() and UnitIsPlayer("target") and not isCasting("target") and (targetclass == "Priest" or targetclass == "Mage") and targetmana >= 10 then
       --  return cast(ManaBurn,"target")
       --end
+      if castable(589,"target") and not debuff(589,"target") and not debuff(ShadowWordPain,"target") and health("target") >= 10 and not IsAutoRepeatAction(1) and moving() and moving("target") then   
+        return cast(589,"target")
+      end
       if castable(MindFlay,"target") and not moving() and (UnitIsPlayer("target") or not wowex.wowexStorage.read("useWand")) and not isChanneling("player") then     
         return cast(MindFlay,"target")
       end
@@ -925,35 +947,38 @@ Routine:RegisterRoutine(function()
   local function Buff()
     if not UnitAffectingCombat("player") and not IsEatingOrDrinking("player") and not mounted() then
       if wowex.wowexStorage.read("buffothers") then
-        for object in OM:Objects(OM.Types.Players) do
-          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and UnitInParty(object) and instanceType ~= "pvp" then -- if friendly player in range
-            if castable(PowerWordFortitude,object) and not buff(PowerWordFortitude,object) and not buff(21564,"player") then
+        for object in OM:Objects(OM.Types.Player) do
+          if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 and UnitInParty(object) then -- if friendly player in range
+            if castable(21564,object) and partyMembersAround(object, 30) >= 5 and not buff(21562,object) and not buff(21564,object) and not buff(PowerWordFortitude,object) and ((buff(2479,"player") and instanceType == "pvp") or instanceType == "party" or instanceType == "raid") then
+              return cast(21564,object)
+            end
+            if castable(27683,object) and partyMembersAround(object, 30) >= 5 and not buff(27683,object) and not buff(ShadowProtection,object) and ((buff(2479,"player") and instanceType == "pvp") or instanceType == "party" or instanceType == "raid") then
+              return cast(27683,object)
+            end
+            if castable(PowerWordFortitude,object) and not buff(PowerWordFortitude,object) and not buff(21564,object) and not buff(21562,object) and instanceType ~= "pvp" then
               return cast(PowerWordFortitude,object)
             end
-            if castable(ShadowProtection,object) and not buff(ShadowProtection,object) then
+            if castable(ShadowProtection,object) and not buff(ShadowProtection,object) and not buff(27683,object) and instanceType ~= "pvp" then
               return cast(ShadowProtection,object)
             end
           end
         end
       end
-      if castable(PowerWordFortitude,"player") and not buff(PowerWordFortitude,"player") and not buff(21564,"player") then
+      if castable(PowerWordFortitude,"player") and not buff(PowerWordFortitude,"player") and not buff(21564,"player") and not buff(21562,"player") then
         return cast(PowerWordFortitude,"player")
       end
-      if castable(ShadowProtection,"player") and not buff(ShadowProtection,"player") then
+      if castable(ShadowProtection,"player") and not buff(ShadowProtection,"player") and not buff(27683,"player") then
         return cast(ShadowProtection,"player")
       end
-      if not buff(Shadowform,"player") and health() > 70 then 
+      if not buff(Shadowform,"player") and health() > 70 then
         return cast(Shadowform,"player")
       end
       if castable(InnerFire,"player") and not buff(InnerFire,"player") then
         return cast(InnerFire,"player")
       end
-      if castable(2652,"player") and not buff(2652,"player") and (instanceType == "pvp" or (UnitExists("target") and UnitIsPlayer("target"))) then -- touch of weakness Rank 1
+      if castable(2652,"player") and not buff(InnerFocus,"player") and not buff(2652,"player") and (instanceType == "pvp" or (UnitExists("target") and UnitIsPlayer("target"))) then -- touch of weakness Rank 1
         return cast(2652,"player")
       end
-      --if castable(PowerWordShield,"player") and instanceType == "pvp" and not buff(PowerWordShield,"player") and not debuff(6788,"player") then
-      --  return cast(PowerWordShield,"player")
-      --end
     end
   end
     
@@ -963,7 +988,7 @@ Routine:RegisterRoutine(function()
         for object in OM:Objects(OM.Types.Player) do
           if not UnitCanAttack("player",object) and UnitIsPlayer(object) and distance("player",object) <= 40 then
             if bufftimer < GetTime() then
-              if castable(PowerWordFortitude,object) and not buff(PowerWordFortitude,object) and not buff(21564,"player") then
+              if castable(PowerWordFortitude,object) and (UnitClass(object) ~= "priest")and not buff(PowerWordFortitude,object) and not buff(21564,object) and not buff(21562,object) then
                 bufftimer = GetTime() + 60
                 return cast(PowerWordFortitude,object)
               end
@@ -976,13 +1001,13 @@ Routine:RegisterRoutine(function()
 
   local function pvp()
     if race == "Undead" then
-      if debuff(5782,"player") or debuff(6213,"player") or debuff(6215,"player") or debuff(5484,"player") or debuff(17928,"player") or debuff(10888,"player") or debuff(6789,"player") or debuff(10890,"player") then
+      if debuff(5782,"player") or debuff(6213,"player") or debuff(6215,"player") or debuff(5484,"player") or debuff(17928,"player") or debuff(10888,"player") or debuff(6789,"player") or debuff(10890,"player") or debuff(5246,"player") then
         return cast(7744,"player") -- Will of Forsaken
       end
     end
 
-    if (SpellCooldown(7744) > 2 and debuff(5782,"player")) or debuff(6213,"player") or debuff(6215,"player") or debuff(5484,"player") or debuff(17928,"player") or debuff(10888,"player") or debuff(6789,"player") or debuff(8122,"player") or debuff(10890,"player") then
-      return Eval('RunMacroText("/use Insignia of the Horde")', 'player')
+    if (SpellCooldown(7744) > 2 and (debuff(5782,"player") or debuff(5246,"player"))) or debuff(6213,"player") or debuff(6215,"player") or debuff(5484,"player") or debuff(17928,"player") or debuff(10888,"player") or debuff(6789,"player") or debuff(8122,"player") or debuff(10890,"player") or debuff(8643,"player") or debuff(118,"player") or debuff(12826,"player") or debuff(28272,"player") or debuff(10308,"player") or debuff(28272,"player") then
+      Eval('RunMacroText("/use 14")', 'player')
     end
 
     for object in OM:Objects(OM.Types.Player) do
@@ -1000,7 +1025,7 @@ Routine:RegisterRoutine(function()
     --if IsFalling("player") and not buff(Levitate,"player") then
     --  return cast(Levitate,"player")
     --end
-
+--[[
     if instanceType == "pvp" then
       for flag in OM:Objects(OM.Types.GameObject) do
         if ObjectID(flag) == 328418 or ObjectID(flag) == 328416 or ObjectID(flag) == 367128 then
@@ -1028,8 +1053,8 @@ Routine:RegisterRoutine(function()
         end
       end
     end
+    ]]
   end
-
   local function DefensiveDispel()
     if wowex.wowexStorage.read("useDefensiveDispel") then
       if wowex.wowexStorage.read('importantdefdispel') then
@@ -1037,7 +1062,7 @@ Routine:RegisterRoutine(function()
           if isMagic("player") and castable(DispelMagic,"player") then
             for i=1,40 do
             local importantdebuff = UnitDebuff("player",i)
-              if importantdebuff == "Shadow Word: Pain" or importantdebuff == "Corruption" or importantdebuff == "Immolate" or importantdebuff == "Fear" or importantdebuff == "Death Coil" or importantdebuff == "Howl of Terror" or importantdebuff == "Frost Nova" or importantdebuff == "Frost Bolt" or importantdebuff == "Hunter's Mark" or importantdebuff == "Polymorph" or importantdebuff == "Hibernate" or importantdebuff == "Hammer of Justice" or importantdebuff == "Entangling Roots" then
+              if importantdebuff == "Shadow Word: Pain" or (importantdebuff == "Corruption" and not UnitAffectingCombat("player")) or (importantdebuff == "Immolate" and not UnitAffectingCombat("player")) or importantdebuff == "Fear" or importantdebuff == "Death Coil" or importantdebuff == "Howl of Terror" or importantdebuff == "Frost Nova" or importantdebuff == "Frostbite" or (importantdebuff == "Frost Bolt" and not UnitAffectingCombat("player")) or (importantdebuff == "Hunter's Mark" and not UnitAffectingCombat("player")) or importantdebuff == "Polymorph" or importantdebuff == "Hibernate" or importantdebuff == "Hammer of Justice" or importantdebuff == "Entangling Roots" then
                 return cast(DispelMagic,"player")
               else break end
             end
@@ -1089,7 +1114,7 @@ Routine:RegisterRoutine(function()
           if isMagicBuff(object) and castable(DispelMagic,object) and UnitTargetingUnit(object,"player") and UnitCanAttack("player",object) and UnitAffectingCombat("player") and not UnitIsDeadOrGhost(object) and not mounted() then
             for i=1,40 do
               local name = UnitBuff(object,i)
-              if name == "Arcane Power" or name == "Innervate" or name == "Ghost Wolf" or name == "Sacrifice" or name == "Fear Ward" or name == "Power Word: Fortitude" or name == "Power Word: Shield" or name == "Blessing of Freedom" or name == "Blessing of Protection" or name == "Blessing of Sacrifice" or name == "Regrowth" or name == "Cone of Cold" or name == "Shadow Ward" or name == "Mana Shield" or name == "Presence of Mind" or name == "Ice Barrier" or name == "Nature's Swiftness" or name == "Dampen Magic" or name == "Major Spellstone" or name == "Shadow Ward" or name == "Free Action Potion" then
+              if name == "Arcane Power" or name == "Innervate" or name == "Ghost Wolf" or name == "Sacrifice" or name == "Fear Ward" or name == "Power Word: Fortitude" or name == "Power Word: Shield" or name == "Shadow Ward" or name == "Mana Shield" or name == "Presence of Mind" or name == "Ice Barrier" or name == "Nature's Swiftness" or name == "Dampen Magic" or name == "Major Spellstone" or name == "Shadow Ward" or name == "Free Action Potion" then
                 return cast(DispelMagic,object)
               else break end
             end
@@ -1130,7 +1155,7 @@ Routine:RegisterRoutine(function()
       if castable(PowerWordShield,"player") and not debuff(6788,"player") and not buff(PowerWordShield,"player") and not IsStealthed("target") then
         return cast(PowerWordShield,"player")
       end
-      if castable(2652,"player") and not buff(2652,"player") then -- touch of weakness Rank 1
+      if castable(2652,"player") and not buff(2652,"player") and not buff(InnerFocus,"player") then -- touch of weakness Rank 1
         return cast(2652,"player")
       end
     end
@@ -1183,9 +1208,10 @@ Routine:RegisterRoutine(function()
   local function Incombat()
     if UnitAffectingCombat("player") then
       if Queue() then return true end
+      if Interrupt() then return true end
+      if Consumables() then return true end
       if Cooldowns() then return true end     
       if Healing() then return true end
-      if Interrupt() then return true end
       if Dps() then return true end
       if Dot() then return true end
       if pvp() then return true end
@@ -1278,11 +1304,21 @@ local mytable = {
         { key = "dotallplayers",  type = "checkbox", text = "DoT all Nearby Players", desc = "" }
       }
     },
+    { 
+      name = "Consumables",
+      items = 
+      {        
+        { key = "heading", type = "heading", color = 'FF7C0A', text = "Cheap Consumes" },
+        { key = "majorhealth",  type = "checkbox", text = "Use Major Health Potions" },
+        { key = "majormana",  type = "checkbox", text = "Use Major Mana Potions" },        
+      }
+    },
   },
   
   tabgroup = 
   {
-    {text = "General", value = "one"},    
+    {text = "General", value = "one"},
+    {text = "Consumables", value = "two"},  
   }
 }
 Draw:Enable()
